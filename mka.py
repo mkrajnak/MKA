@@ -176,6 +176,14 @@ class automata:     #class used to store all values needed to work with automata
         self.print_list(self.ka_end)
         print(')')                                 #end
 
+    def check_trap(self):
+        for a in self.ka_rules:
+            forward_states = []
+            for b in self.ka_rules[a]:
+                if self.ka_rules[a][b] not in forward_states:
+                    forward_states.append(self.ka_rules[a][b])
+            if len(forward_states) == 1 and a in forward_states:
+                print(a)
 
 
 def error(message,code):
@@ -257,6 +265,9 @@ mka.buffer = get_rid_of_comments(mka.buffer)
 #print(mka.buffer)
 
 mka.parse_automata()
+
 #debug(mka)
 if not args.find_non_finishing and not args.minimize:
     mka.print_automata()
+elif args.find_non_finishing:
+    mka.check_trap()
