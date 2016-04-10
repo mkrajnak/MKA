@@ -30,7 +30,7 @@ class automata:     #class used to store all values needed to work with automata
         state = ''                          #epmty string
         l = []                              #setup empty list
         for char in self.get_char():
-            if char == '\'' or char.isspace():  #skip inwanted chars
+            if char.isspace():  #skip inwanted chars
                 pass
             elif char == ',':               #end if current token, store it
                 l.append(state)             #and go to next
@@ -100,12 +100,9 @@ class automata:     #class used to store all values needed to work with automata
                 pass
             elif char == ',' and string != '':   #end if current token, store it
                 self.commas += 1
-                print(char)
                 return string
             else:
                 string += char               #appending
-            print('HERE')
-            print(string)
 
 
     def parse_automata(self):   #stores automata in data structures
@@ -133,6 +130,54 @@ class automata:     #class used to store all values needed to work with automata
                 self.roundbrackets += 1             # and brackets
 
 
+    def print_list(self,l):
+
+        sys.stdout.write('{')           #start
+        for string in l[:-1]:
+            sys.stdout.write(string)    #every element will be written with comma
+            sys.stdout.write(',')
+        else:
+            sys.stdout.write(l[-1])     #last element without comma
+        sys.stdout.write('},\n')        #properly end
+
+
+    def print_dict(self,d):
+
+        sys.stdout.write('{')           #start
+        s=0
+        for a in d:
+            for b in d[a]:
+                s += 1;
+        c=0
+        for a in d:
+            for b in d[a]:
+                sys.stdout.write('%s ' %a)
+                sys.stdout.write('%s -> ' %b)
+                c += 1;
+                if c != s:
+                    sys.stdout.write('%s,\n' %d[a][b])
+                else:
+                    sys.stdout.write('%s\n' %d[a][b])
+        sys.stdout.write('},\n')        #properly end
+
+
+    def print_automata(self):
+        print('(')
+        self.print_list(self.ka_states)
+        self.print_list(self.ka_alphabet)
+        self.print_dict(self.ka_rules)
+        print(self.ka_start)            #start state + ,
+        sys.stdout.write(',')
+
+        self.print_list(self.ka_end)
+        print(')')
+
+
+
+def error(message,code):
+    sys.stderr.write("ERR:%s\n"%message)
+    sys.exit(code)
+
 '''
 @brief will erase comments from input
 @return string without comments
@@ -142,25 +187,34 @@ def get_rid_of_comments(ka):
     return re.sub(regex, '',mka.buffer)
 
 
-def get_input(args):    #reads input from file TODO: stdin
+def get_input(args):            #reads input from file TODO: stdin
     if args.input != None:
-        try:
+        try:                                #tries to open fiel
             f = open(args.input[0], 'r')
-        except:
+        except:                             #error handling
             print('Cannot open file', args.input)
-        else:
+        else:                               #file opened, get stuff
             buffer = f.read()
             f.close()
-            return buffer
+            return buffer                   #return inside a string
 
 
-def args_handler(parser):       #setting properly arg library options
+def args_handler():       #setting properly arg library options
 
+    parser = argparse.ArgumentParser(prog='PROG', description='MKA',add_help=False)
+    parser.add_argument('--help', action="help", help='print out this message and exits')
     parser.add_argument('--input', nargs=1, help='insert corrent input file name')
     parser.add_argument('--output', nargs=1, help='insert corrent output file name')
     parser.add_argument('-f','--find-non-finishing', help='finding nonfinishing state of MKA', action='store_true')
     parser.add_argument('-m','--minimize', help='will make minimalization of automata', action='store_true')
     parser.add_argument('-i','--case-insensitive', help='will properly convert the case of letters', action='store_true')
+    return parser;
+
+
+def check_args(args):
+
+    if args.find_non_finishing and args.minimize:
+        error("Cannot use this combination of arguments",1)
 
 
 def debug(mka):
@@ -184,12 +238,14 @@ def debug(mka):
     print ("ROUND:%d" % mka.roundbrackets)
     print ("COMMAS:%d" % mka.commas)
 
+
 '''
 MAIN
 '''
-parser = argparse.ArgumentParser()
-args_handler(parser)
+parser = args_handler()
 args = parser.parse_args()
+print(args)
+check_args(args)
 
 mka = automata();
 mka.buffer = get_input(args)
@@ -197,5 +253,6 @@ mka.buffer = get_rid_of_comments(mka.buffer)
 print(mka.buffer)
 
 mka.parse_automata()
-
 debug(mka)
+if not args.find_non_finishing and not args.minimize:
+    mka.print_automata()
