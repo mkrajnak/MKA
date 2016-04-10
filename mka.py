@@ -19,13 +19,17 @@ class automata:     #class used to store all values needed to work with automata
     ka_start = ''           #start state store inside string
     ka_end = []             #list of end states
 
+    def get_char(self):
+        while(self.buffer_index < len(self.buffer) -1):
+            self.buffer_index += 1
+            yield self.buffer[self.buffer_index]
 
     def get_list(self): #goind through part betwee{} char by char and return them
                         #in list
         self.state += 1
         state = ''                          #epmty string
         l = []                              #setup empty list
-        for char in get_char(self):
+        for char in self.get_char():
             if char == '\'' or char.isspace():  #skip inwanted chars
                 pass
             elif char == ',':               #end if current token, store it
@@ -45,12 +49,14 @@ class automata:     #class used to store all values needed to work with automata
         counter = 0                         #counter for goining through one rule
         l = ['','','','']                   #empty list, every rule has 4 strings
         d = {}                              #prepare empty dict
-        for char in get_char(self):
+        for char in self.get_char():
             if char.isspace() or char == '\n':  #skiping newlines and whitespaces
                 pass
+
             elif char == '}':                   #rule definition ends here
                 mka.curlybracket += 1
                 break
+
             elif counter == 0:              #process first part of rule
                 if char == '\'':
                     counter += 1            #increment counter to go to next part
@@ -89,10 +95,10 @@ class automata:     #class used to store all values needed to work with automata
     def get_start(self):
         self.state += 1
         string = ''                          #epmty string
-        for char in get_char(self):
-            if char.isspace():  #skip inwanted chars
+        for char in self.get_char():
+            if char.isspace():               #skip inwanted chars
                 pass
-            elif char == ',' and string != '':               #end if current token, store it
+            elif char == ',' and string != '':   #end if current token, store it
                 self.commas += 1
                 print(char)
                 return string
@@ -100,6 +106,32 @@ class automata:     #class used to store all values needed to work with automata
                 string += char               #appending
             print('HERE')
             print(string)
+
+
+    def parse_automata(self):   #stores automata in data structures
+
+        for char in self.get_char():    #going through text char by char
+
+            if char.isspace() or char =='\n':  #skipping spaces
+                pass
+            if char == '{':             #go inside every part started wih {
+                if self.state == 0:     #and properly store everything
+                    self.ka_states = self.get_list()
+                elif self.state == 1:
+                    self.ka_alphabet = self.get_list()
+                elif self.state == 2:
+                    self.ka_rules = self.get_dict()
+                elif self.state == 4:
+                    self.ka_end = self.get_list()
+                self.curlybracket += 1
+            elif char == ',' and self.state == 3:   # start states in not
+                self.commas += 1                    #inside {}
+                self.ka_start = self.get_start()
+            elif char == ',':
+                self.commas += 1                    #counting commas
+            elif char == '(' or char == ')':
+                self.roundbrackets += 1             # and brackets
+
 
 '''
 @brief will erase comments from input
@@ -109,79 +141,61 @@ def get_rid_of_comments(ka):
     regex = re.compile('(#.*)$',re.MULTILINE)
     return re.sub(regex, '',mka.buffer)
 
-def get_char(ka):
-    while(mka.buffer_index < len(mka.buffer) -1):
-        mka.buffer_index += 1
-        yield mka.buffer[mka.buffer_index]
+
+def get_input(args):    #reads input from file TODO: stdin
+    if args.input != None:
+        try:
+            f = open(args.input[0], 'r')
+        except:
+            print('Cannot open file', args.input)
+        else:
+            buffer = f.read()
+            f.close()
+            return buffer
 
 
+def args_handler(parser):       #setting properly arg library options
+
+    parser.add_argument('--input', nargs=1, help='insert corrent input file name')
+    parser.add_argument('--output', nargs=1, help='insert corrent output file name')
+    parser.add_argument('-f','--find-non-finishing', help='finding nonfinishing state of MKA', action='store_true')
+    parser.add_argument('-m','--minimize', help='will make minimalization of automata', action='store_true')
+    parser.add_argument('-i','--case-insensitive', help='will properly convert the case of letters', action='store_true')
 
 
+def debug(mka):
+    print('*********')
+    for s in mka.ka_states:
+        print(s)
+    print('ABC')
+    for s in mka.ka_alphabet:
+        print(s)
+    print('RULES')
+    for rule in mka.ka_rules:
+        print ("%s:" % rule)
+        print ("%s:" % mka.ka_rules[rule])
+    print('START')
+    print(mka.ka_start)
+    print('END')
+    for end in mka.ka_end:
+        print(end)
+
+    print ("CURLY:%d" % mka.curlybracket)
+    print ("ROUND:%d" % mka.roundbrackets)
+    print ("COMMAS:%d" % mka.commas)
+
+'''
+MAIN
+'''
 parser = argparse.ArgumentParser()
-parser.add_argument('--input', nargs=1, help='insert corrent input file name')
-parser.add_argument('--output', nargs=1, help='insert corrent output file name')
-parser.add_argument('-f','--find-non-finishing', help='finding nonfinishing state of MKA', action='store_true')
-parser.add_argument('-m','--minimize', help='will make minimalization of automata', action='store_true')
-parser.add_argument('-i','--case-insensitive', help='will properly convert the case of letters', action='store_true')
-
+args_handler(parser)
 args = parser.parse_args()
-#print(args)
 
 mka = automata();
-
-if args.input != None:
-    try:
-        f = open(args.input[0], 'r')
-    except:
-        print('Cannot open file', args.input)
-    else:
-        mka.buffer = f.read()
-        f.close()
-mka.buffer = get_rid_of_comments(mka)
+mka.buffer = get_input(args)
+mka.buffer = get_rid_of_comments(mka.buffer)
 print(mka.buffer)
 
-for char in get_char(mka):
-    print(char)
-    if char.isspace():
-        pass
-    if char == '{':
-        if mka.state == 0:
-            mka.ka_states = mka.get_list()
-        elif mka.state == 1:
-            mka.ka_alphabet = mka.get_list()
-        elif mka.state == 2:
-            mka.ka_rules = mka.get_dict()
-        elif mka.state == 4:
-            mka.ka_end = mka.get_list()
-        mka.curlybracket += 1
-    elif char == ',' and mka.state == 3:
-        mka.ka_start = mka.get_start()
-        mka.commas += 1
-    elif char == ',':
-        mka.commas += 1
-    elif char == '(' or char == ')':
-        mka.roundbrackets += 1
+mka.parse_automata()
 
-print('*********')
-for s in mka.ka_states:
-    print(s)
-print('ABC')
-for s in mka.ka_alphabet:
-    print(s)
-print('RULES')
-for rule in mka.ka_rules:
-    print ("%s:" % rule)
-    print ("%s:" % mka.ka_rules[rule])
-print('START')
-print(mka.ka_start)
-print('END')
-for end in mka.ka_end:
-    print(end)
-
-print ("CURLY:%d" % mka.curlybracket)
-print ("ROUND:%d" % mka.roundbrackets)
-print ("COMMAS:%d" % mka.commas)
-
-#init_parser()
-#for line in sys.stdin:
-#    print (line)
+debug(mka)
