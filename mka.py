@@ -18,7 +18,7 @@ class automata:     #class used to store all values needed to work with automata
     ka_alphabet = []        #list of aplhabet
     ka_rules = {}           #dictionary inside dictionary of rules
     ka_start = ''           #start state store inside string
-    ka_end = []             #list of end states
+    ka_end_states = []             #list of end states
 
     output = sys.stdout
 
@@ -126,7 +126,7 @@ class automata:     #class used to store all values needed to work with automata
                 elif self.state == 2:
                     self.ka_rules = self.get_dict()
                 elif self.state == 4:
-                    self.ka_end = self.get_list()
+                    self.ka_end_states = self.get_list()
                 self.curlybracket += 1
             elif char == ',' and self.state == 3:   # start states in not
                 self.commas += 1                    #inside {}
@@ -177,7 +177,7 @@ class automata:     #class used to store all values needed to work with automata
         self.output.write(self.ka_start)            #start state + ,
         self.output.write(',\n')
 
-        self.print_list(self.ka_end)
+        self.print_list(self.ka_end_states)
         self.output.write(')')                                #end
 
 
@@ -208,7 +208,7 @@ class automata:     #class used to store all values needed to work with automata
                 if self.ka_rules[a][b] not in self.ka_states:
                     error('state: %s in rules is not defined'%self.ka_rules[a][b],61)
         #end states must be defined as states
-        for a in self.ka_end:
+        for a in self.ka_end_states:
             if a not in self.ka_states:                         #check state
                 error('state: %s in rules is not defined'%a,61)
 
@@ -286,7 +286,7 @@ def debug(mka):
     print('START')
     print(mka.ka_start)
     print('END')
-    for end in mka.ka_end:
+    for end in mka.ka_end_states:
         print(end)
 
     print ("CURLY:%d" % mka.curlybracket)
@@ -299,15 +299,18 @@ MAIN
 '''
 parser = args_handler()
 args = parser.parse_args()
-#print(args)
+print(args)
 check_args(args)
 
 mka = automata();
 mka.buffer = get_input(args)
 mka.buffer = get_rid_of_comments(mka.buffer)
 #print(mka.buffer)
+if args.case_insensitive:
+    mka.buffer = mka.buffer.lower()
 
 mka.parse_automata()
+
 mka.check_automata()
 #debug(mka)
 if not args.find_non_finishing and not args.minimize:
