@@ -20,6 +20,8 @@ class automata:     #class used to store all values needed to work with automata
     ka_start = ''           #start state store inside string
     ka_end = []             #list of end states
 
+    output = sys.stdout
+
     def get_char(self):
         while(self.buffer_index < len(self.buffer) -1):
             self.buffer_index += 1
@@ -137,18 +139,18 @@ class automata:     #class used to store all values needed to work with automata
 
     def print_list(self,l):
 
-        sys.stdout.write('{')           #start
+        self.output.write('{')           #start
         for string in l[:-1]:
-            sys.stdout.write(string)    #every element will be written with comma
-            sys.stdout.write(', ')
+            self.output.write(string)    #every element will be written with comma
+            self.output.write(', ')
         else:
-            sys.stdout.write(l[-1])     #last element without comma
-        sys.stdout.write('},\n')        #properly end
+            self.output.write(l[-1])     #last element without comma
+        self.output.write('},\n')        #properly end
 
 
     def print_dict(self,d):
 
-        print('{')           #start
+        self.output.write('{\n')           #start
         s=0                             #element count - due proper formating
         for a in d:
             for b in d[a]:
@@ -156,27 +158,27 @@ class automata:     #class used to store all values needed to work with automata
         c=0
         for a in d:
             for b in d[a]:
-                sys.stdout.write('%s ' %a)
-                sys.stdout.write('%s -> ' %b)
+                self.output.write('%s ' %a)
+                self.output.write('%s -> ' %b)
                 c += 1;
                 if c != s:
-                    sys.stdout.write('%s,\n' %d[a][b])
+                    self.output.write('%s,\n' %d[a][b])
                 else:
-                    sys.stdout.write('%s\n' %d[a][b])   #lastest element
-        sys.stdout.write('},\n')        #properly end
+                    self.output.write('%s\n' %d[a][b])   #lastest element
+        self.output.write('},\n')        #properly end
 
 
     def print_automata(self):
-        print('(')                                 #start
+        self.output.write('(\n')                                 #start
         self.print_list(self.ka_states)            #printing lists
         self.print_list(self.ka_alphabet)
         self.print_dict(self.ka_rules)             #printing dict
 
-        sys.stdout.write(self.ka_start)            #start state + ,
-        sys.stdout.write(',\n')
+        self.output.write(self.ka_start)            #start state + ,
+        self.output.write(',\n')
 
         self.print_list(self.ka_end)
-        print(')')                                 #end
+        self.output.write(')')                                #end
 
 
     def check_trap(self):
@@ -187,6 +189,8 @@ class automata:     #class used to store all values needed to work with automata
                     forward_states.append(self.ka_rules[a][b])
             if len(forward_states) == 1 and a in forward_states:
                 print(a)
+        else:
+            print(0);
 
 
     def check_automata(self):
@@ -209,6 +213,19 @@ class automata:     #class used to store all values needed to work with automata
                 error('state: %s in rules is not defined'%a,61)
 
 
+    def write(self, mka):
+        if args.output is None:
+            self.print_automata()                               #file opened, get stuff
+        else:
+            try:                                #tries to open fiel
+                f = open(args.output[0], 'w')
+            except:                             #error handling
+                error('Cannot open file:%s'%args.input,3 )
+            self.output = f
+            self.print_automata()                               #file opened, get stuf
+            f.close()
+
+
 def error(message,code):
     sys.stderr.write("ERR:%s\n"%message)
     sys.exit(code)
@@ -224,7 +241,7 @@ def get_rid_of_comments(ka):
 
 
 def get_input(args):            #reads input from file TODO: stdin
-    if args.input != None:
+    if args.input is not None:
         try:                                #tries to open fiel
             f = open(args.input[0], 'r')
         except:                             #error handling
@@ -294,6 +311,6 @@ mka.parse_automata()
 mka.check_automata()
 #debug(mka)
 if not args.find_non_finishing and not args.minimize:
-    mka.print_automata()
+    mka.write(args)
 elif args.find_non_finishing:
     mka.check_trap()
