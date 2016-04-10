@@ -189,8 +189,23 @@ class automata:     #class used to store all values needed to work with automata
 
 
     def check_automata(self):
-        if not self.ka_alphabet:
+        if not self.ka_alphabet:        #alphabet is empty
             error('empty alphabet',61)
+        if self.ka_start not in self.ka_states: #start state no defined in states
+            error('start state is not defined',61)
+        #rule consists of undefined state of unknown symbol
+        for a in self.ka_rules:
+            if a not in self.ka_states:                         #check state
+                error('state: %s in rules is not defined'%a,61)
+            for b in self.ka_rules[a]:
+                if b not in self.ka_alphabet:                   #check symbol
+                    error('symbol: %s in rules is not defined'%b,61)
+                if self.ka_rules[a][b] not in self.ka_states:
+                    error('state: %s in rules is not defined'%self.ka_rules[a][b],61)
+        #end states must be defined as states
+        for a in self.ka_end:
+            if a not in self.ka_states:                         #check state
+                error('state: %s in rules is not defined'%a,61)
 
 
 def error(message,code):
@@ -273,11 +288,6 @@ mka.buffer = get_rid_of_comments(mka.buffer)
 
 mka.parse_automata()
 mka.check_automata()
-a=[]
-a.append('')
-print('LIST')
-if not a:
-    print('Empty')
 #debug(mka)
 if not args.find_non_finishing and not args.minimize:
     mka.print_automata()
