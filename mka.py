@@ -1,6 +1,6 @@
 #!/bin/python
 
-
+#MKA:xkrajn02
 import argparse
 import sys
 import re
@@ -178,6 +178,7 @@ class automata:     #class used to store all values needed to work with automata
         self.print_list(self.ka_end)
         print(')')                                 #end
 
+
     def check_trap(self):
         for a in self.ka_rules:
             forward_states = []
@@ -212,6 +213,7 @@ def error(message,code):
     sys.stderr.write("ERR:%s\n"%message)
     sys.exit(code)
 
+
 '''
 @brief will erase comments from input
 @return string without comments
@@ -231,6 +233,8 @@ def get_input(args):            #reads input from file TODO: stdin
             buffer = f.read()
             f.close()
             return buffer                   #return inside a string
+    else:
+        return sys.stdin.read()
 
 
 def args_handler():       #setting properly arg library options
