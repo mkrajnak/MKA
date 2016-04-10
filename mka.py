@@ -19,6 +19,7 @@ class automata:     #class used to store all values needed to work with automata
     ka_start = ''           #start state store inside string
     ka_end = []             #list of end states
 
+
     def get_list(self): #goind through part betwee{} char by char and return them
                         #in list
         self.state += 1
@@ -31,6 +32,7 @@ class automata:     #class used to store all values needed to work with automata
                 l.append(state)             #and go to next
                 state = ''
             elif char == '}':               #end of section
+                mka.curlybracket += 1
                 l.append(state)             #store token and go back
                 state = ''
                 return l                    #returns list if tokens found in {}
@@ -47,6 +49,7 @@ class automata:     #class used to store all values needed to work with automata
             if char.isspace() or char == '\n':  #skiping newlines and whitespaces
                 pass
             elif char == '}':                   #rule definition ends here
+                mka.curlybracket += 1
                 break
             elif counter == 0:              #process first part of rule
                 if char == '\'':
@@ -89,7 +92,8 @@ class automata:     #class used to store all values needed to work with automata
         for char in get_char(self):
             if char.isspace():  #skip inwanted chars
                 pass
-            elif char == ',':               #end if current token, store it
+            elif char == ',' and string != '':               #end if current token, store it
+                self.commas += 1
                 print(char)
                 return string
             else:
@@ -147,11 +151,16 @@ for char in get_char(mka):
             mka.ka_alphabet = mka.get_list()
         elif mka.state == 2:
             mka.ka_rules = mka.get_dict()
-            
-            mka.ka_start = mka.get_start()
         elif mka.state == 4:
             mka.ka_end = mka.get_list()
-
+        mka.curlybracket += 1
+    elif char == ',' and mka.state == 3:
+        mka.ka_start = mka.get_start()
+        mka.commas += 1
+    elif char == ',':
+        mka.commas += 1
+    elif char == '(' or char == ')':
+        mka.roundbrackets += 1
 
 print('*********')
 for s in mka.ka_states:
@@ -168,6 +177,11 @@ print(mka.ka_start)
 print('END')
 for end in mka.ka_end:
     print(end)
+
+print ("CURLY:%d" % mka.curlybracket)
+print ("ROUND:%d" % mka.roundbrackets)
+print ("COMMAS:%d" % mka.commas)
+
 #init_parser()
 #for line in sys.stdin:
 #    print (line)
