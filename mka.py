@@ -5,7 +5,7 @@ import argparse
 import sys
 import re
 
-class automata:
+class automata:     #class used to store all values needed to work with automata
     buffer = ''
     buffer_index = -1
     roundbrackets = 0
@@ -13,56 +13,56 @@ class automata:
     commas = 0
     state = 0
 
-    ka_states = []
-    ka_alphabet = []
-    ka_rules = {}
-    ka_start = ''
-    ka_end = []
+    ka_states = []          #list of finit states
+    ka_alphabet = []        #list of aplhabet
+    ka_rules = {}           #dictionary inside dictionary of rules
+    ka_start = ''           #start state store inside string
+    ka_end = []             #list of end states
 
-    def get_list(self):
-
+    def get_list(self): #goind through part betwee{} char by char and return them
+                        #in list
         self.state += 1
-        state = ''
-        l = []
+        state = ''                          #epmty string
+        l = []                              #setup empty list
         for char in get_char(self):
-            if char == '\'' or char.isspace():
+            if char == '\'' or char.isspace():  #skip inwanted chars
                 pass
-            elif char == ',':
-                l.append(state)
+            elif char == ',':               #end if current token, store it
+                l.append(state)             #and go to next
                 state = ''
-            elif char == '}':
-                l.append(state)
+            elif char == '}':               #end of section
+                l.append(state)             #store token and go back
                 state = ''
-                return l
+                return l                    #returns list if tokens found in {}
             else:
-                state += char
+                state += char               #appending char to string
 
 
     def get_dict(self):
         self.state += 1
-        counter = 0
-        l = ['','','','']
-        d = {}
+        counter = 0                         #counter for goining through one rule
+        l = ['','','','']                   #empty list, every rule has 4 strings
+        d = {}                              #prepare empty dict
         for char in get_char(self):
-            if char.isspace() or char == '\n':
+            if char.isspace() or char == '\n':  #skiping newlines and whitespaces
                 pass
-            elif char == '}':
+            elif char == '}':                   #rule definition ends here
                 break
-            elif counter == 0:
+            elif counter == 0:              #process first part of rule
                 if char == '\'':
-                    counter += 1
-                    l[counter] += char
+                    counter += 1            #increment counter to go to next part
+                    l[counter] += char      #append char (' is needed)
                 else:
                     l[counter] += char
 
-            elif counter == 1:
+            elif counter == 1:              #process second part of rule
                 if char == '\'':
                     l[counter] += char
                     counter += 1
                 else:
                     l[counter] += char
 
-            elif counter == 2:
+            elif counter == 2:              #process third part of rule
                 if char == '-':
                     l[counter] += char
                 elif char == '>':
@@ -71,17 +71,31 @@ class automata:
                 else:
                     print('ERRR')
 
-            elif counter == 3:
+            elif counter == 3:              #final stage
                 if char == ',':
-                    if l[0] not in d.keys():
-                        d[l[0]] = {l[1] : l[3]}
+                    if l[0] not in d.keys():    #check if key is already in dict
+                        d[l[0]] = {l[1] : l[3]} #if not store another dict inside
                     else:
-                        d[l[0]].update({l[1] : l[3]})
+                        d[l[0]].update({l[1] : l[3]}) #TODO:function
                     l = ['','','','']
                     counter = 0
                 else:
                     l[counter] += char
         return d
+
+    def get_start(self):
+        self.state += 1
+        string = ''                          #epmty string
+        for char in get_char(self):
+            if char.isspace():  #skip inwanted chars
+                pass
+            elif char == ',':               #end if current token, store it
+                print(char)
+                return string
+            else:
+                string += char               #appending
+            print('HERE')
+            print(string)
 
 '''
 @brief will erase comments from input
@@ -133,8 +147,11 @@ for char in get_char(mka):
             mka.ka_alphabet = mka.get_list()
         elif mka.state == 2:
             mka.ka_rules = mka.get_dict()
-        else:
-            break
+            
+            mka.ka_start = mka.get_start()
+        elif mka.state == 4:
+            mka.ka_end = mka.get_list()
+
 
 print('*********')
 for s in mka.ka_states:
@@ -142,11 +159,15 @@ for s in mka.ka_states:
 print('ABC')
 for s in mka.ka_alphabet:
     print(s)
-
+print('RULES')
 for rule in mka.ka_rules:
     print ("%s:" % rule)
     print ("%s:" % mka.ka_rules[rule])
-
+print('START')
+print(mka.ka_start)
+print('END')
+for end in mka.ka_end:
+    print(end)
 #init_parser()
 #for line in sys.stdin:
 #    print (line)
