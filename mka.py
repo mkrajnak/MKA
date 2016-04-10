@@ -4,6 +4,7 @@
 import argparse
 import sys
 import re
+from collections import OrderedDict
 
 class automata:     #class used to store all values needed to work with automata
     buffer = ''
@@ -48,14 +49,11 @@ class automata:     #class used to store all values needed to work with automata
         self.state += 1
         counter = 0                         #counter for goining through one rule
         l = ['','','','']                   #empty list, every rule has 4 strings
-        d = {}                              #prepare empty dict
+        d = OrderedDict()                             #prepare empty dict
         for char in self.get_char():
+
             if char.isspace() or char == '\n':  #skiping newlines and whitespaces
                 pass
-
-            elif char == '}':                   #rule definition ends here
-                mka.curlybracket += 1
-                break
 
             elif counter == 0:              #process first part of rule
                 if char == '\'':
@@ -81,16 +79,21 @@ class automata:     #class used to store all values needed to work with automata
                     print('ERRR')
 
             elif counter == 3:              #final stage
-                if char == ',':
+                if char == ',' or char == '}' :
+                    mka.curlybracket += 1
                     if l[0] not in d.keys():    #check if key is already in dict
-                        d[l[0]] = {l[1] : l[3]} #if not store another dict inside
+                        d[l[0]] = OrderedDict({l[1] : l[3]}) #if not store another dict inside
                     else:
                         d[l[0]].update({l[1] : l[3]}) #TODO:function
+                    if char == '}':
+                        break;
                     l = ['','','','']
                     counter = 0
                 else:
                     l[counter] += char
+
         return d
+
 
     def get_start(self):
         self.state += 1
@@ -135,7 +138,7 @@ class automata:     #class used to store all values needed to work with automata
         sys.stdout.write('{')           #start
         for string in l[:-1]:
             sys.stdout.write(string)    #every element will be written with comma
-            sys.stdout.write(',')
+            sys.stdout.write(', ')
         else:
             sys.stdout.write(l[-1])     #last element without comma
         sys.stdout.write('},\n')        #properly end
@@ -143,8 +146,8 @@ class automata:     #class used to store all values needed to work with automata
 
     def print_dict(self,d):
 
-        sys.stdout.write('{')           #start
-        s=0
+        print('{')           #start
+        s=0                             #element count - due proper formating
         for a in d:
             for b in d[a]:
                 s += 1;
@@ -157,20 +160,21 @@ class automata:     #class used to store all values needed to work with automata
                 if c != s:
                     sys.stdout.write('%s,\n' %d[a][b])
                 else:
-                    sys.stdout.write('%s\n' %d[a][b])
+                    sys.stdout.write('%s\n' %d[a][b])   #lastest element
         sys.stdout.write('},\n')        #properly end
 
 
     def print_automata(self):
-        print('(')
-        self.print_list(self.ka_states)
+        print('(')                                 #start
+        self.print_list(self.ka_states)            #printing lists
         self.print_list(self.ka_alphabet)
-        self.print_dict(self.ka_rules)
-        print(self.ka_start)            #start state + ,
-        sys.stdout.write(',')
+        self.print_dict(self.ka_rules)             #printing dict
+
+        sys.stdout.write(self.ka_start)            #start state + ,
+        sys.stdout.write(',\n')
 
         self.print_list(self.ka_end)
-        print(')')
+        print(')')                                 #end
 
 
 
@@ -244,15 +248,15 @@ MAIN
 '''
 parser = args_handler()
 args = parser.parse_args()
-print(args)
+#print(args)
 check_args(args)
 
 mka = automata();
 mka.buffer = get_input(args)
 mka.buffer = get_rid_of_comments(mka.buffer)
-print(mka.buffer)
+#print(mka.buffer)
 
 mka.parse_automata()
-debug(mka)
+#debug(mka)
 if not args.find_non_finishing and not args.minimize:
     mka.print_automata()
