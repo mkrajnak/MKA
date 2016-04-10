@@ -28,21 +28,23 @@ class automata:     #class used to store all values needed to work with automata
     def get_list(self): #goind through part betwee{} char by char and return them
                         #in list
         self.state += 1
-        state = ''                          #epmty string
+        string = ''                          #epmty string
         l = []                              #setup empty list
         for char in self.get_char():
             if char.isspace():  #skip inwanted chars
                 pass
             elif char == ',':               #end if current token, store it
-                l.append(state)             #and go to next
-                state = ''
+                l.append(string)             #and go to next
+                string = ''
             elif char == '}':               #end of section
+                if string == '':
+                    return l
                 mka.curlybracket += 1
-                l.append(state)             #store token and go back
-                state = ''
+                l.append(string)            #store token and go back
+                string = ''
                 return l                    #returns list if tokens found in {}
             else:
-                state += char               #appending char to string
+                string += char               #appending char to string
 
 
     def get_dict(self):
@@ -186,6 +188,11 @@ class automata:     #class used to store all values needed to work with automata
                 print(a)
 
 
+    def check_automata(self):
+        if not self.ka_alphabet:
+            error('empty alphabet',61)
+
+
 def error(message,code):
     sys.stderr.write("ERR:%s\n"%message)
     sys.exit(code)
@@ -265,7 +272,12 @@ mka.buffer = get_rid_of_comments(mka.buffer)
 #print(mka.buffer)
 
 mka.parse_automata()
-
+mka.check_automata()
+a=[]
+a.append('')
+print('LIST')
+if not a:
+    print('Empty')
 #debug(mka)
 if not args.find_non_finishing and not args.minimize:
     mka.print_automata()
