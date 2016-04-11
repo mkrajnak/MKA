@@ -80,7 +80,7 @@ class automata:     #class used to store all values needed to work with automata
                     l[counter] += char
                     counter += 1
                 else:
-                    print('ERRR')
+                    #print('ERRR')
 
             elif counter == 3:              #final stage
                 if char == ',' or char == '}' :
@@ -226,6 +226,81 @@ class automata:     #class used to store all values needed to work with automata
             f.close()
 
 
+    def same_items(self,l):
+        for item in l:
+            if item != l[0]:
+                return False;
+        else: return True;
+
+    def same_group(self, test_members, group):
+
+        for member in test_members:
+            if member not in group:
+                return False;
+        else: return True;
+
+    def minimize(self):
+        other_states = []
+        for state in self.ka_states:
+            if state not in self.ka_end_states:
+                other_states.append(state)
+        #print(other_states)
+        d = OrderedDict()
+        temp = []
+        new_states = []
+        for symbol in self.ka_alphabet:
+            for state in other_states:
+                temp.append(self.ka_rules[state][symbol])
+            else:
+                if self.same_items(temp):
+                    new_state = "_".join(other_states)
+                    if temp[0] in other_states:
+                        next_state = new_state
+                    else:
+                        next_state = temp[0]
+                    if new_state not in d.keys():    #check if key is already in dict
+                        d[new_state] = OrderedDict({symbol : next_state}) #if not store another dict inside
+                    else:
+                        d[new_state].update({symbol : next_state}) #TODO:functi
+                temp = []
+
+            for state in self.ka_end_states:
+                #print(state)
+                temp.append(self.ka_rules[state][symbol])
+            else:
+                if len(temp) == 1:
+                    new_state = state
+                    next_state = temp[0]
+                    if new_state not in d.keys():    #check if key is already in dict
+                        d[new_state] = OrderedDict({symbol : next_state}) #if not store another dict inside
+                    else:
+                        d[new_state].update({symbol : next_state}) #TODO:functi
+
+                elif self.same_items(temp):
+                    new_state = "_".join(other_states)
+                    if temp[0] in other_states:
+                        next_state = new_state
+                    else:
+                        next_state = temp[0]
+                    if new_state not in d.keys():    #check if key is already in dict
+                        d[new_state] = OrderedDict({symbol : next_state}) #if not store another dict inside
+                    else:
+                        d[new_state].update({symbol : next_state}) #TODO:functi
+
+                temp = []
+
+
+        #print(d)
+        ma = automata()
+        ma.ka_rules = d
+        ma.ka_end_states = self.ka_end_states
+        ma.ka_alphabet = self.ka_alphabet
+        for a in ma.ka_rules:
+            if a not in ma.ka_states:
+                ma.ka_states.append(a)
+        ma.ka_start = ma.ka_states[0]
+        return ma
+
 def error(message,code):
     sys.stderr.write("ERR:%s\n"%message)
     sys.exit(code)
@@ -245,7 +320,7 @@ def get_input(args):            #reads input from file TODO: stdin
         try:                                #tries to open fiel
             f = open(args.input[0], 'r')
         except:                             #error handling
-            print('Cannot open file', args.input)
+            error('Cannot open file %s', %args.input)
         else:                               #file opened, get stuff
             buffer = f.read()
             f.close()
@@ -299,7 +374,7 @@ MAIN
 '''
 parser = args_handler()
 args = parser.parse_args()
-print(args)
+#print(args)
 check_args(args)
 
 mka = automata();
@@ -317,3 +392,6 @@ if not args.find_non_finishing and not args.minimize:
     mka.write(args)
 elif args.find_non_finishing:
     mka.check_trap()
+elif args.minimize:
+    ma = mka.minimize()
+    ma.write(args)
