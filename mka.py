@@ -79,7 +79,6 @@ class automata:     #class used to store all values needed to work with automata
                 elif char == '>':
                     l[counter] += char
                     counter += 1
-                else:
                     #print('ERRR')
 
             elif counter == 3:              #final stage
@@ -320,7 +319,7 @@ def get_input(args):            #reads input from file TODO: stdin
         try:                                #tries to open fiel
             f = open(args.input[0], 'r')
         except:                             #error handling
-            error('Cannot open file %s', %args.input)
+            error('Cannot open file %s' %args.input)
         else:                               #file opened, get stuff
             buffer = f.read()
             f.close()
