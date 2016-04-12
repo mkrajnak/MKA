@@ -6,7 +6,7 @@ import sys
 import re
 from collections import OrderedDict
 
-class automata:     #class used to store all values needed to work with automata
+class automata:     #class used to store all values needed
     buffer = ''
     buffer_index = -1
     roundbrackets = 0
@@ -94,7 +94,6 @@ class automata:     #class used to store all values needed to work with automata
                     counter = 0
                 else:
                     l[counter] += char
-
         return d
 
 
@@ -118,7 +117,7 @@ class automata:     #class used to store all values needed to work with automata
             if char.isspace() or char =='\n':  #skipping spaces
                 pass
             if char == '{':             #go inside every part started wih {
-                if self.state == 0:     #and properly store everything
+                if self.state == 0:     #and properly store everything inside
                     self.ka_states = self.get_list()
                 elif self.state == 1:
                     self.ka_alphabet = self.get_list()
@@ -239,7 +238,8 @@ class automata:     #class used to store all values needed to work with automata
         else: return True;
 
     def minimize(self):
-        other_states = []
+
+        other_states = []   #dividing states
         for state in self.ka_states:
             if state not in self.ka_end_states:
                 other_states.append(state)
@@ -248,6 +248,8 @@ class automata:     #class used to store all values needed to work with automata
         temp = []
         new_states = []
         for symbol in self.ka_alphabet:
+
+            #go though states that are not in end states
             for state in other_states:
                 temp.append(self.ka_rules[state][symbol])
             else:
@@ -261,13 +263,25 @@ class automata:     #class used to store all values needed to work with automata
                         d[new_state] = OrderedDict({symbol : next_state}) #if not store another dict inside
                     else:
                         d[new_state].update({symbol : next_state}) #TODO:functi
+                elif self.same_group(temp,other_states) or  \
+                    self.same_group(temp, self.ka_end_states):
+                    new_state = "_".join(temp)
+                    if temp[0] in other_states: # we know that all items are from same group, therefore we need to test only one of them
+                        next_state = new_state
+                    else:
+                        next_state = temp[0]
+                    if new_state not in d.keys():    #check if key is already in dict
+                        d[new_state] = OrderedDict({symbol : next_state}) #if not store another dict inside
+                    else:
+                        d[new_state].update({symbol : next_state}) #TODO:functi
+                print(temp)
                 temp = []
-
+            #go through end states
             for state in self.ka_end_states:
                 #print(state)
                 temp.append(self.ka_rules[state][symbol])
             else:
-                if len(temp) == 1:
+                if len(temp) == 1:  #only one end state
                     new_state = state
                     next_state = temp[0]
                     if new_state not in d.keys():    #check if key is already in dict
@@ -275,7 +289,7 @@ class automata:     #class used to store all values needed to work with automata
                     else:
                         d[new_state].update({symbol : next_state}) #TODO:functi
 
-                elif self.same_items(temp):
+                elif self.same_items(temp): #same items
                     new_state = "_".join(other_states)
                     if temp[0] in other_states:
                         next_state = new_state
@@ -290,7 +304,7 @@ class automata:     #class used to store all values needed to work with automata
 
 
         #print(d)
-        ma = automata()
+        ma = automata() #creating minimized automata
         ma.ka_rules = d
         ma.ka_end_states = self.ka_end_states
         ma.ka_alphabet = self.ka_alphabet
