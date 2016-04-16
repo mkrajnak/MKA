@@ -244,6 +244,11 @@ class automata:     #class used to store all values needed
         else:
             return True;
 
+    def get_key(self, d, value1, value2):
+        for key in d.keys():
+            if d[key][value1] == value2:
+                return key;
+
 
     def minimize(self):
 
@@ -259,6 +264,8 @@ class automata:     #class used to store all values needed
         print(groups)
         temp = []
         new_states = []
+        temp_rules = OrderedDict()
+        temp_rules.update(self.ka_rules)
         for symbol in self.ka_alphabet:
             #go though states that are not in end states
             for state in other_states:
@@ -273,21 +280,24 @@ class automata:     #class used to store all values needed
                 else:
                     print("Not same")
                     print(temp)
-                grp1 = []
-                grp2 = []
-                for member in temp:
-                    if self.is_member(member, self.ka_end_states):
-                        grp1.append(member)#member
-                    else:
-                        grp2.append(member)#noone
-                print("GRP1")
-                print(grp1)
-                print("GRP2")
-                print(grp2)
-                groups.append(grp1)
-                groups.append(grp2)
-                print(groups)
-                exit(9)
+                    grp1 = []
+                    grp2 = []
+                    for member in temp:
+                        key = self.get_key(temp_rules,symbol,member)
+                        del temp_rules[key]
+                        if self.is_member(member, self.ka_end_states):
+                            grp1.append(key)#member
+                        else:
+                            grp2.append(key)
+                    print("GRP1")
+                    print(grp1)
+                    print("GRP2")
+                    print(grp2)
+                    groups.remove(other_states)
+                    groups.append(grp1)
+                    groups.append(grp2)
+                    print(groups)
+                    exit(9)
                 temp = []
                 #go through end states
 
@@ -391,7 +401,7 @@ if args.case_insensitive:
 mka.parse_automata()
 
 mka.check_automata()
-debug(mka)
+#debug(mka)
 if not args.find_non_finishing and not args.minimize:
     mka.write(args)
 elif args.find_non_finishing:
