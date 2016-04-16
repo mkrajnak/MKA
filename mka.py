@@ -230,12 +230,17 @@ class automata:     #class used to store all values needed
                 return False;
         else: return True;
 
-    def same_group(self, test_members, group):
+    def same_group(self, test_members, groups):
 
-        for member in test_members:
-            if member not in group:
-                return False;
-        else: return True;
+        for grp in groups:
+            membership = True;
+            for member in test_members:
+                if not self.is_member(member,grp):
+                    membership = False
+                    break;
+            else:
+                return membership
+
 
     def is_member(self, member, group):
 
@@ -252,57 +257,55 @@ class automata:     #class used to store all values needed
 
     def minimize(self):
 
-        other_states = []   #dividing states
+        other_states = []   #initial division of states
         for state in self.ka_states:
             if state not in self.ka_end_states:
                 other_states.append(state)
         #print(other_states)
-        d = OrderedDict()
-        groups = []
-        groups.append(self.ka_end_states)
-        groups.append(other_states)
+        groups = []         #added divided states in groups
+        groups.append(other_states)       #other states first
+        groups.append(self.ka_end_states) #end states last
         print(groups)
-        temp = []
-        new_states = []
-        temp_rules = OrderedDict()
-        temp_rules.update(self.ka_rules)
+        temp = []   #temporary list of nextstates for certain state and given symbol
+        temp_rules = OrderedDict()  #temporaty dict for rules
+        temp_rules.update(self.ka_rules) # adding rules from original automata
+        # for every symbol
         for symbol in self.ka_alphabet:
             #go though states that are not in end states
-            for state in other_states:
-                print(state)
-                temp.append(self.ka_rules[state][symbol])
-            else:
-                print(temp)
-                if self.same_group(temp,self.ka_end_states) or \
-                    self.same_group(temp,other_states):
-                    print("Same")
+            for grp in groups:
+                for state in grp:
+                    print(state)
+                    temp.append(self.ka_rules[state][symbol])
                     print(temp)
                 else:
-                    print("Not same")
                     print(temp)
-                    grp1 = []
-                    grp2 = []
-                    for member in temp:
-                        key = self.get_key(temp_rules,symbol,member)
-                        del temp_rules[key]
-                        if self.is_member(member, self.ka_end_states):
-                            grp1.append(key)#member
-                        else:
-                            grp2.append(key)
-                    print("GRP1")
-                    print(grp1)
-                    print("GRP2")
-                    print(grp2)
-                    groups.remove(other_states)
-                    groups.append(grp1)
-                    groups.append(grp2)
-                    print(groups)
-                    exit(9)
-                temp = []
-                #go through end states
+                    if self.same_group(temp,groups):
+                        print("Same")
+                        print(temp)
+                    else:
+                        print("Not same")
+                        print(temp)
+                        grp1 = []
+                        grp2 = []
+                        for member in temp:
+                            key = self.get_key(temp_rules,symbol,member)
+                            del temp_rules[key]
+                            if self.is_member(member, self.ka_end_states):
+                                grp1.append(key)#member
+                            else:
+                                grp2.append(key)
+                        print("GRP1")
+                        print(grp1)
+                        print("GRP2")
+                        print(grp2)
+                        groups.remove(other_states)
+                        groups.append(grp1)
+                        groups.append(grp2)
+                        print(groups)
+                    temp = []
 
 
-
+        print(groups)
         exit(0)
         #print(d)
         # ma = automata() #creating minimized automata
