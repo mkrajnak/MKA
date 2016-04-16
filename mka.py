@@ -254,6 +254,12 @@ class automata:     #class used to store all values needed
             if d[key][value1] == value2:
                 return key;
 
+    def get_rules_for_group(self, group):
+
+        d = OrderedDict()
+        for member in group:
+                d[member] = self.ka_rules[member]
+        return d
 
     def minimize(self):
 
@@ -267,41 +273,61 @@ class automata:     #class used to store all values needed
         groups.append(other_states)       #other states first
         print(groups)
         temp = []   #temporary list of nextstates for certain state and given symbol
-        temp_rules = OrderedDict()  #temporaty dict for rules
-        temp_rules.update(self.ka_rules) # adding rules from original automata
+
         temp_groups = []    #init empty list !!!! very important
         temp_groups = list(groups)
         # for every symbol
-        for symbol in self.ka_alphabet:
-            #go though states that are not in end states
-            for grp in groups:
-                for state in grp:
-                    print(state)
-                    temp.append(self.ka_rules[state][symbol])
-                else:
+        division_counter = 0 # end this when states are not divided in two cycles in a row
+        while(True):
+            other_states = groups[-1]
+            division_flag = False
+            for symbol in self.ka_alphabet:
+                #go though states that are not in end states
+                for grp in groups:
+                    temp_rules = self.get_rules_for_group(grp)
+                    for state in grp:
+                        print(state)
+                        temp.append(self.ka_rules[state][symbol])
                     print(temp)
                     if self.same_group(temp,groups):
                         print("Same")
                     else:
+                        division_counter = 0
                         print("Not same")
                         print(temp)
                         grp1 = []
                         grp2 = []
                         for member in temp:
                             key = self.get_key(temp_rules,symbol,member)
+                            print("Deleting")
+                            print(key)
                             del temp_rules[key]
-                            if self.is_member(member, self.ka_end_states):
+                            if self.is_member(member, other_states):
                                 grp1.append(key)#member
                             else:
                                 grp2.append(key)
+                        print(other_states)
                         temp_groups.remove(other_states)
-                        temp_groups.append(grp1)
-                        temp_groups.append(grp2)
+                        if len(grp1) > len(grp2):
+                            temp_groups.append(grp2)
+                            temp_groups.append(grp1)
+                        else:
+                            temp_groups.append(grp1)
+                            temp_groups.append(grp2)
                         print(temp_groups)
                         print(groups)
-                        sys.stdin.read(1)
+                        division_flag = True
                     temp = []
+                if division_flag:
+                    break;
 
+            if temp_groups == groups:
+                division_counter += 1
+            if division_counter == 2:
+                break;
+            groups = list(temp_groups) # update list of grups due division changes
+            print("BEGGIN")
+            print(division_counter)
         print('END')
         print(temp_groups)
         exit(0)
