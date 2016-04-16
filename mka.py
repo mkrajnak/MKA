@@ -263,12 +263,14 @@ class automata:     #class used to store all values needed
                 other_states.append(state)
         #print(other_states)
         groups = []         #added divided states in groups
-        groups.append(other_states)       #other states first
         groups.append(self.ka_end_states) #end states last
+        groups.append(other_states)       #other states first
         print(groups)
         temp = []   #temporary list of nextstates for certain state and given symbol
         temp_rules = OrderedDict()  #temporaty dict for rules
         temp_rules.update(self.ka_rules) # adding rules from original automata
+        temp_groups = []    #init empty list !!!! very important
+        temp_groups = list(groups)
         # for every symbol
         for symbol in self.ka_alphabet:
             #go though states that are not in end states
@@ -276,12 +278,10 @@ class automata:     #class used to store all values needed
                 for state in grp:
                     print(state)
                     temp.append(self.ka_rules[state][symbol])
-                    print(temp)
                 else:
                     print(temp)
                     if self.same_group(temp,groups):
                         print("Same")
-                        print(temp)
                     else:
                         print("Not same")
                         print(temp)
@@ -294,18 +294,16 @@ class automata:     #class used to store all values needed
                                 grp1.append(key)#member
                             else:
                                 grp2.append(key)
-                        print("GRP1")
-                        print(grp1)
-                        print("GRP2")
-                        print(grp2)
-                        groups.remove(other_states)
-                        groups.append(grp1)
-                        groups.append(grp2)
+                        temp_groups.remove(other_states)
+                        temp_groups.append(grp1)
+                        temp_groups.append(grp2)
+                        print(temp_groups)
                         print(groups)
+                        sys.stdin.read(1)
                     temp = []
 
-
-        print(groups)
+        print('END')
+        print(temp_groups)
         exit(0)
         #print(d)
         # ma = automata() #creating minimized automata
