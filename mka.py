@@ -237,6 +237,14 @@ class automata:     #class used to store all values needed
                 return False;
         else: return True;
 
+    def is_member(self, member, group):
+
+        if member not in group:
+            return False;
+        else:
+            return True;
+
+
     def minimize(self):
 
         other_states = []   #dividing states
@@ -245,74 +253,57 @@ class automata:     #class used to store all values needed
                 other_states.append(state)
         #print(other_states)
         d = OrderedDict()
+        groups = []
+        groups.append(self.ka_end_states)
+        groups.append(other_states)
+        print(groups)
         temp = []
         new_states = []
         for symbol in self.ka_alphabet:
-
             #go though states that are not in end states
             for state in other_states:
+                print(state)
                 temp.append(self.ka_rules[state][symbol])
             else:
-                if self.same_items(temp):
-                    new_state = "_".join(other_states)
-                    if temp[0] in other_states:
-                        next_state = new_state
-                    else:
-                        next_state = temp[0]
-                    if new_state not in d.keys():    #check if key is already in dict
-                        d[new_state] = OrderedDict({symbol : next_state}) #if not store another dict inside
-                    else:
-                        d[new_state].update({symbol : next_state}) #TODO:functi
-                elif self.same_group(temp,other_states) or  \
-                    self.same_group(temp, self.ka_end_states):
-                    new_state = "_".join(temp)
-                    if temp[0] in other_states: # we know that all items are from same group, therefore we need to test only one of them
-                        next_state = new_state
-                    else:
-                        next_state = temp[0]
-                    if new_state not in d.keys():    #check if key is already in dict
-                        d[new_state] = OrderedDict({symbol : next_state}) #if not store another dict inside
-                    else:
-                        d[new_state].update({symbol : next_state}) #TODO:functi
                 print(temp)
+                if self.same_group(temp,self.ka_end_states) or \
+                    self.same_group(temp,other_states):
+                    print("Same")
+                    print(temp)
+                else:
+                    print("Not same")
+                    print(temp)
+                grp1 = []
+                grp2 = []
+                for member in temp:
+                    if self.is_member(member, self.ka_end_states):
+                        grp1.append(member)#member
+                    else:
+                        grp2.append(member)#noone
+                print("GRP1")
+                print(grp1)
+                print("GRP2")
+                print(grp2)
+                groups.append(grp1)
+                groups.append(grp2)
+                print(groups)
+                exit(9)
                 temp = []
-            #go through end states
-            for state in self.ka_end_states:
-                #print(state)
-                temp.append(self.ka_rules[state][symbol])
-            else:
-                if len(temp) == 1:  #only one end state
-                    new_state = state
-                    next_state = temp[0]
-                    if new_state not in d.keys():    #check if key is already in dict
-                        d[new_state] = OrderedDict({symbol : next_state}) #if not store another dict inside
-                    else:
-                        d[new_state].update({symbol : next_state}) #TODO:functi
-
-                elif self.same_items(temp): #same items
-                    new_state = "_".join(other_states)
-                    if temp[0] in other_states:
-                        next_state = new_state
-                    else:
-                        next_state = temp[0]
-                    if new_state not in d.keys():    #check if key is already in dict
-                        d[new_state] = OrderedDict({symbol : next_state}) #if not store another dict inside
-                    else:
-                        d[new_state].update({symbol : next_state}) #TODO:functi
-
-                temp = []
+                #go through end states
 
 
+
+        exit(0)
         #print(d)
-        ma = automata() #creating minimized automata
-        ma.ka_rules = d
-        ma.ka_end_states = self.ka_end_states
-        ma.ka_alphabet = self.ka_alphabet
-        for a in ma.ka_rules:
-            if a not in ma.ka_states:
-                ma.ka_states.append(a)
-        ma.ka_start = ma.ka_states[0]
-        return ma
+        # ma = automata() #creating minimized automata
+        # ma.ka_rules = d
+        # ma.ka_end_states = self.ka_end_states
+        # ma.ka_alphabet = self.ka_alphabet
+        # for a in ma.ka_rules:
+        #     if a not in ma.ka_states:
+        #         ma.ka_states.append(a)
+        # ma.ka_start = ma.ka_states[0]
+        # return ma
 
 def error(message,code):
     sys.stderr.write("ERR:%s\n"%message)
@@ -400,7 +391,7 @@ if args.case_insensitive:
 mka.parse_automata()
 
 mka.check_automata()
-#debug(mka)
+debug(mka)
 if not args.find_non_finishing and not args.minimize:
     mka.write(args)
 elif args.find_non_finishing:
