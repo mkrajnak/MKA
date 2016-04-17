@@ -197,9 +197,10 @@ class automata:     #class used to store all values needed
                 if self.ka_rules[a][b] not in forward_states:
                     forward_states.append(self.ka_rules[a][b])
             if len(forward_states) == 1 and a in forward_states:
-                print(a)
+                sys.stdout.write(a)
+                exit(0)
         else:
-            print(0)
+            sys.stdout.write(0)
 
     def check_alphabet(self):
         if not self.ka_alphabet:        #alphabet is empty
@@ -502,7 +503,10 @@ def debug(mka):
 MAIN
 '''
 parser = args_handler()
-args = parser.parse_args()
+try:
+    args = parser.parse_args()
+except SystemExit:
+    error("",1)
 #print(args)
 check_args(args)
 
