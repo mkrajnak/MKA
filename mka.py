@@ -261,6 +261,58 @@ class automata:     #class used to store all values needed
                 d[member] = self.ka_rules[member]
         return d
 
+    def add_rules(self, d, state, symbol, next_state):
+
+        if state not in d.keys():
+            d[state] = OrderedDict({symbol:next_state})
+        else:
+            d[state].update({symbol:next_state})
+        return d
+
+
+    def update_states(self, groups):
+
+        new_states = []
+        for group in groups:
+            if len(group) == 1:
+                new_states.append(group[0])
+            else:
+                new_states.append("_".join(group))
+        return new_states
+
+    def find_merged_state(self,groups,state):
+
+        for group in groups:
+            if state in group:
+                return "_".join(group)
+
+    def find_merged(self,groups,state):
+
+        for group in groups:
+            if state == '_'.join(group):
+                return group[0]
+
+    def create_rules(self, groups, states):
+
+        new_rules = OrderedDict() #
+        for state in states:
+            for symbol in self.ka_alphabet:
+                if state not in self.ka_rules.keys():
+                    temp_state = self.find_merged(groups,state)
+                    next_state = self.ka_rules[temp_state][symbol]
+                    if next_state not in states:
+                        next_state = self.find_merged_state(groups,next_state)
+                    self.add_rules(new_rules, state, symbol,next_state)
+                else:
+                    next_state = self.ka_rules[state][symbol]
+                    if next_state not in states:
+                        next_state = self.find_merged_state(groups,next_state)
+                    self.add_rules(new_rules, state, symbol,next_state)
+
+
+        return new_rules
+
+
     def minimize(self):
 
         other_states = []   #initial division of states
@@ -329,18 +381,19 @@ class automata:     #class used to store all values needed
             print("BEGGIN")
             print(division_counter)
         print('END')
-        print(temp_groups)
-        exit(0)
-        #print(d)
-        # ma = automata() #creating minimized automata
-        # ma.ka_rules = d
-        # ma.ka_end_states = self.ka_end_states
-        # ma.ka_alphabet = self.ka_alphabet
-        # for a in ma.ka_rules:
-        #     if a not in ma.ka_states:
-        #         ma.ka_states.append(a)
-        # ma.ka_start = ma.ka_states[0]
-        # return ma
+        groups.sort()
+        print(groups)
+
+
+        ma = automata() #creating minimized automata
+        ma.ka_states = self.update_states(groups)
+        ma.ka_rules = self.create_rules(groups,ma.ka_states)
+        self.print_dict(ma.ka_rules)
+        exit(1)
+        ma.ka_end_states = self.ka_end_states
+        ma.ka_alphabet = self.ka_alphabet
+        ma.ka_start = ma.ka_states[0]
+        return ma
 
 def error(message,code):
     sys.stderr.write("ERR:%s\n"%message)
