@@ -143,7 +143,7 @@ class automata:     #class used to store all values needed
             self.output.write(', ')
         else:
             self.output.write(l[-1])     #last element without comma
-        self.output.write('},\n')        #properly end
+        self.output.write('}')        #properly end
 
 
     def print_dict(self,d):
@@ -169,14 +169,16 @@ class automata:     #class used to store all values needed
     def print_automata(self):
         self.output.write('(\n')                                 #start
         self.print_list(self.ka_states)            #printing lists
+        self.output.write(',\n')
         self.print_list(self.ka_alphabet)
+        self.output.write(',\n')
         self.print_dict(self.ka_rules)             #printing dict
 
         self.output.write(self.ka_start)            #start state + ,
         self.output.write(',\n')
 
         self.print_list(self.ka_end_states)
-        self.output.write(')')                                #end
+        self.output.write('\n)')                                #end
 
 
     def check_trap(self):
