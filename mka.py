@@ -110,12 +110,14 @@ class automata:     #class used to store all values needed
 
             elif counter == 3:              #final stage
                 if char == ',' or char == '}' :
-                    mka.curlybracket += 1
                     if l[0] not in d.keys():    #check if key is already in dict
                         d[l[0]] = OrderedDict({l[1] : l[3]}) #if not store another dict inside
                     else:
+                        if l[1] in d[l[0]].keys() and d[l[0]][l[1]] != l[3]:
+                            error("rule duplication",62)
                         d[l[0]].update({l[1] : l[3]}) #TODO:function
                     if char == '}':
+                        mka.curlybracket += 1
                         break;
                     l = ['','','','']
                     counter = 0
@@ -159,7 +161,12 @@ class automata:     #class used to store all values needed
             elif char == ',':
                 self.commas += 1                    #counting commas
             elif char == '(' or char == ')':
-                self.roundbrackets += 1             # and brackets
+                self.roundbrackets += 1
+                             # and brackets
+        if self.curlybracket != 8 or \
+            self.commas != 4 or\
+            self.roundbrackets != 2:
+            error("Bad input",60)
 
 
     def print_list(self,l):
@@ -468,6 +475,21 @@ class automata:     #class used to store all values needed
                 symbol = ''
 
 
+    def determinization_test(self):
+
+        reachable = []
+        for state in self.ka_states:
+            for symbol in self.ka_alphabet:
+                if state != self.ka_rules[state][symbol]:
+                    reachable.append(self.ka_rules[state][symbol])
+
+        else:
+            reachable = list(set(reachable))
+            print(reachable)
+            print(self.ka_states)
+            if len(reachable) != len(self.ka_states):
+                error("non deterministic",62)
+
 def error(message,code):
     sys.stderr.write("ERR:%s\n"%message)
     sys.exit(code)
@@ -574,6 +596,7 @@ def debug(mka):
 '''
 MAIN
 '''
+
 parser = args_handler()
 try:
     args = parser.parse_args()
@@ -592,9 +615,9 @@ if args.case_insensitive:
     mka.buffer = mka.buffer.lower()
 
 mka.parse_automata()
-
 #debug(mka)
 mka.check_automata()
+#mka.determinization_test()
 if not args.find_non_finishing and not args.minimize:
     mka.write(args)
 elif args.find_non_finishing:
