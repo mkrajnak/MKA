@@ -292,6 +292,7 @@ class automata:     #class used to store all values needed
             if state == '_'.join(group):
                 return group[0]
 
+
     def create_rules(self, groups, states):
 
         new_rules = OrderedDict() #
@@ -308,8 +309,6 @@ class automata:     #class used to store all values needed
                     if next_state not in states:
                         next_state = self.find_merged_state(groups,next_state)
                     self.add_rules(new_rules, state, symbol,next_state)
-
-
         return new_rules
 
 
@@ -319,11 +318,11 @@ class automata:     #class used to store all values needed
         for state in self.ka_states:
             if state not in self.ka_end_states:
                 other_states.append(state)
-        #print(other_states)
+
         groups = []         #added divided states in groups
         groups.append(self.ka_end_states) #end states last
         groups.append(other_states)       #other states first
-        print(groups)
+
         temp = []   #temporary list of nextstates for certain state and given symbol
 
         temp_groups = []    #init empty list !!!! very important
@@ -336,60 +335,49 @@ class automata:     #class used to store all values needed
             for symbol in self.ka_alphabet:
                 #go though states that are not in end states
                 for grp in groups:
-                    temp_rules = self.get_rules_for_group(grp)
-                    for state in grp:
-                        print(state)
+                    # go through every group
+                    temp_rules = self.get_rules_for_group(grp) #reload rules
+
+                    for state in grp:   #add next states of group in one list to
+                                        #see deviding is needed
                         temp.append(self.ka_rules[state][symbol])
-                    print(temp)
-                    if self.same_group(temp,groups):
-                        print("Same")
-                    else:
+                    if not self.same_group(temp,groups): #divide
+
                         division_counter = 0
-                        print("Not same")
-                        print(temp)
                         grp1 = []
                         grp2 = []
-                        for member in temp:
+                        for member in temp: #check groups for every memeber
+                                            #and correctly divide them in right groups
                             key = self.get_key(temp_rules,symbol,member)
-                            print("Deleting")
-                            print(key)
                             del temp_rules[key]
                             if self.is_member(member, other_states):
                                 grp1.append(key)#member
                             else:
                                 grp2.append(key)
-                        print(other_states)
-                        temp_groups.remove(other_states)
-                        if len(grp1) > len(grp2):
+
+                        temp_groups.remove(other_states)#delete group which was devided
+                        if len(grp1) > len(grp2):       # add new groups
                             temp_groups.append(grp2)
                             temp_groups.append(grp1)
                         else:
                             temp_groups.append(grp1)
                             temp_groups.append(grp2)
-                        print(temp_groups)
-                        print(groups)
                         division_flag = True
                     temp = []
                 if division_flag:
-                    break;
+                    break;  #groups was devided, no need to check another symbol
 
-            if temp_groups == groups:
+            if temp_groups == groups: # no change
                 division_counter += 1
             if division_counter == 2:
-                break;
+                break;  #no change for two iterations, no further minimalisation
             groups = list(temp_groups) # update list of grups due division changes
-            print("BEGGIN")
-            print(division_counter)
-        print('END')
         groups.sort()
-        print(groups)
 
-
+        #minimized ! handle new automata
         ma = automata() #creating minimized automata
         ma.ka_states = self.update_states(groups)
         ma.ka_rules = self.create_rules(groups,ma.ka_states)
-        self.print_dict(ma.ka_rules)
-        exit(1)
         ma.ka_end_states = self.ka_end_states
         ma.ka_alphabet = self.ka_alphabet
         ma.ka_start = ma.ka_states[0]
@@ -400,10 +388,6 @@ def error(message,code):
     sys.exit(code)
 
 
-'''
-@brief will erase comments from input
-@return string without comments
-'''
 def get_rid_of_comments(ka):
     regex = re.compile('(#.*)$',re.MULTILINE)
     return re.sub(regex, '',mka.buffer)
