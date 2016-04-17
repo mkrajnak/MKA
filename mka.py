@@ -190,7 +190,7 @@ class automata:     #class used to store all values needed
             if len(forward_states) == 1 and a in forward_states:
                 print(a)
         else:
-            print(0);
+            print(0)
 
 
     def check_automata(self):
@@ -222,7 +222,7 @@ class automata:     #class used to store all values needed
             except:                             #error handling
                 error('Cannot open file:%s'%args.input,3 )
             self.output = f
-            self.print_automata()                               #file opened, get stuf
+            self.print_automata()                        #file opened, get stuf
             f.close()
 
 
@@ -375,6 +375,8 @@ class automata:     #class used to store all values needed
                 break;  #no change for two iterations, no further minimalisation
             groups = list(temp_groups) # update list of grups due division changes
         groups.sort()
+        for group in groups:
+            group.sort()
 
         #minimized ! handle new automata
         ma = automata() #creating minimized automata
