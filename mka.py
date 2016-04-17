@@ -32,9 +32,13 @@ class automata:     #class used to store all values needed
         self.state += 1
         string = ''                          #epmty string
         l = []                              #setup empty list
+        spaces = True
         for char in self.get_char():
-            if char.isspace():  #skip inwanted chars
+            if char.isspace() and spaces:  #skip inwanted chars
                 pass
+            elif char == '\'':
+                string += char
+                spaces = not spaces
             elif char == ',':               #end if current token, store it
                 l.append(string)             #and go to next
                 string = ''
@@ -44,7 +48,9 @@ class automata:     #class used to store all values needed
                 mka.curlybracket += 1
                 l.append(string)            #store token and go back
                 string = ''
-                return l                    #returns list if tokens found in {}
+                l = list(set(l))
+                l.sort()
+                return l         #returns list if tokens found in {}
             else:
                 string += char               #appending char to string
 
@@ -54,13 +60,15 @@ class automata:     #class used to store all values needed
         counter = 0                         #counter for goining through one rule
         l = ['','','','']                   #empty list, every rule has 4 strings
         d = OrderedDict()                             #prepare empty dict
+        spaces = True
         for char in self.get_char():
 
-            if char.isspace() or char == '\n':  #skiping newlines and whitespaces
+            if char.isspace() and spaces:  #skiping newlines and whitespaces
                 pass
 
             elif counter == 0:              #process first part of rule
                 if char == '\'':
+                    spaces = not spaces
                     counter += 1            #increment counter to go to next part
                     l[counter] += char      #append char (' is needed)
                 else:
@@ -68,6 +76,7 @@ class automata:     #class used to store all values needed
 
             elif counter == 1:              #process second part of rule
                 if char == '\'':
+                    spaces = not spaces
                     l[counter] += char
                     counter += 1
                 else:
@@ -192,10 +201,26 @@ class automata:     #class used to store all values needed
         else:
             print(0)
 
-
-    def check_automata(self):
+    def check_alphabet(self):
         if not self.ka_alphabet:        #alphabet is empty
             error('empty alphabet',61)
+        for symbol in self.ka_alphabet:
+            if symbol == '\'\'':
+                error("epsilon in alphabet",60)
+            if len(symbol) > 3:
+                error("too many chars in symbol",60)
+
+
+    def check_states(self):
+        for state in self.ka_states:
+            if state[0] == '_' or state[0].isdigit() or state[-1] == '_':
+                error('wrong state syntax %s'%state,60)
+
+
+    def check_automata(self):
+
+        self.check_alphabet()
+        self.check_states()
         if self.ka_start not in self.ka_states: #start state no defined in states
             error('start state is not defined',61)
         #rule consists of undefined state of unknown symbol
@@ -203,11 +228,15 @@ class automata:     #class used to store all values needed
             if a not in self.ka_states:                         #check state
                 error('state: %s in rules is not defined'%a,61)
             for b in self.ka_rules[a]:
+                if b == "\'\'":
+                    error("epsilon in transition",62)
                 if b not in self.ka_alphabet:                   #check symbol
                     error('symbol: %s in rules is not defined'%b,61)
                 if self.ka_rules[a][b] not in self.ka_states:
                     error('state: %s in rules is not defined'%self.ka_rules[a][b],61)
         #end states must be defined as states
+        if not self.ka_end_states:
+            error('no end states',62)
         for a in self.ka_end_states:
             if a not in self.ka_states:                         #check state
                 error('state: %s in rules is not defined'%a,61)
@@ -382,10 +411,29 @@ class automata:     #class used to store all values needed
         ma = automata() #creating minimized automata
         ma.ka_states = self.update_states(groups)
         ma.ka_rules = self.create_rules(groups,ma.ka_states)
-        ma.ka_end_states = self.ka_end_states
+
+        end_state = self.ka_end_states[0]
+        if end_state not in ma.ka_states:
+            end_state = self.find_merged_state(groups,end_state)
+        ma.ka_end_states.append(end_state)
+
+        ma.ka_start = self.ka_start
+        if ma.ka_start not in ma.ka_states:
+            ma.ka_start = self.find_merged_state(groups,ma.ka_start)
+
         ma.ka_alphabet = self.ka_alphabet
-        ma.ka_start = ma.ka_states[0]
         return ma
+
+
+    def check_whitespaces(self):
+
+        for symbol in self.ka_alphabet:
+            for char in symbol:
+                if char != ' ':
+                    return
+            else:
+                symbol = ''
+
 
 def error(message,code):
     sys.stderr.write("ERR:%s\n"%message)
@@ -402,7 +450,7 @@ def get_input(args):            #reads input from file TODO: stdin
         try:                                #tries to open fiel
             f = open(args.input[0], 'r')
         except:                             #error handling
-            error('Cannot open file %s' %args.input)
+            error('Cannot open file %s' %args.input,2)
         else:                               #file opened, get stuff
             buffer = f.read()
             f.close()
@@ -433,7 +481,6 @@ def debug(mka):
     print('*********')
     for s in mka.ka_states:
         print(s)
-    print('ABC')
     for s in mka.ka_alphabet:
         print(s)
     print('RULES')
@@ -461,6 +508,8 @@ check_args(args)
 
 mka = automata();
 mka.buffer = get_input(args)
+if len(mka.buffer) == 0:
+    exit(60)
 mka.buffer = get_rid_of_comments(mka.buffer)
 #print(mka.buffer)
 if args.case_insensitive:
@@ -468,8 +517,8 @@ if args.case_insensitive:
 
 mka.parse_automata()
 
-mka.check_automata()
 #debug(mka)
+mka.check_automata()
 if not args.find_non_finishing and not args.minimize:
     mka.write(args)
 elif args.find_non_finishing:
