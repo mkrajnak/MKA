@@ -3,6 +3,7 @@
 #MKA:xkrajn02
 import argparse
 import sys
+import os
 import re
 from collections import OrderedDict
 
@@ -206,6 +207,17 @@ class automata:     #class used to store all values needed
         self.print_list(self.ka_end_states)
         self.output.write('\n)')                                #end
 
+    def write_trap(self,trap):
+        if args.output is None:
+            sys.stdout.write(trap)
+        else:
+            try:
+                path = os.path.expanduser(args.output[0])  #tries to open fiel
+                f = open(path, 'w')
+            except:                             #error handling
+                error('Cannot open file:%s'%path,3 )
+            f.write(trap)
+            f.close()
 
     def check_trap(self):
         for a in self.ka_rules:
@@ -214,10 +226,10 @@ class automata:     #class used to store all values needed
                 if self.ka_rules[a][b] not in forward_states:
                     forward_states.append(self.ka_rules[a][b])
             if len(forward_states) == 1 and a in forward_states:
-                sys.stdout.write(a)
+                self.write_trap(a)
                 exit(0)
         else:
-            sys.stdout.write(0)
+            self.write_trap(str(0))
 
     def check_alphabet(self):
         if not self.ka_alphabet:        #alphabet is empty
@@ -266,10 +278,11 @@ class automata:     #class used to store all values needed
         if args.output is None:
             self.print_automata()                               #file opened, get stuff
         else:
-            try:                                #tries to open fiel
-                f = open(args.output[0], 'w')
+            try:
+                path = os.path.expanduser(args.output[0])             #tries to open fiel
+                f = open(path, 'w')
             except:                             #error handling
-                error('Cannot open file:%s'%args.input,3 )
+                error('Cannot open file:%s'%path,3 )
             self.output = f
             self.print_automata()                        #file opened, get stuf
             f.close()
@@ -467,10 +480,11 @@ def get_rid_of_comments(ka):
 
 def get_input(args):            #reads input from file TODO: stdin
     if args.input is not None:
-        try:                                #tries to open fiel
-            f = open(args.input[0], 'r')
+        try:
+            my_path = os.path.expanduser(args.input[0])  #tries to open fiel
+            f = open(my_path, 'r')
         except:                             #error handling
-            error('Cannot open file %s' %args.input,2)
+            error('Cannot open file %s' %my_path,2)
         else:                               #file opened, get stuff
             buffer = f.read()
             f.close()
