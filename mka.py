@@ -27,6 +27,15 @@ class automata:     #class used to store all values needed
             self.buffer_index += 1
             yield self.buffer[self.buffer_index]
 
+    def escape(self,string):
+        new_string = ''
+        for char in string:
+            if char.isspace():
+                return new_string
+            else:
+                new_string += char
+        return new_string
+
     def get_list(self): #goind through part betwee{} char by char and return them
                         #in list
         self.state += 1
@@ -34,25 +43,27 @@ class automata:     #class used to store all values needed
         l = []                              #setup empty list
         spaces = True
         for char in self.get_char():
-            if char.isspace() and spaces:  #skip inwanted chars
+            if char.isspace() and spaces:   #skip unwanted chars
                 pass
             elif char == '\'':
                 string += char
                 spaces = not spaces
             elif char == ',':               #end if current token, store it
-                l.append(string)             #and go to next
+                #string = self.escape(string)
+                l.append(string)            #and go to next
                 string = ''
             elif char == '}':               #end of section
+                mka.curlybracket += 1
                 if string == '':
                     return l
-                mka.curlybracket += 1
+                #string = self.escape(string)
                 l.append(string)            #store token and go back
                 string = ''
                 l = list(set(l))
                 l.sort()
-                return l         #returns list if tokens found in {}
+                return l                    #returns list if tokens found in {}
             else:
-                string += char               #appending char to string
+                string += char              #appending char to string
 
 
     def get_dict(self):
@@ -63,9 +74,15 @@ class automata:     #class used to store all values needed
         spaces = True
         for char in self.get_char():
 
+            if counter == -1:
+                    if char == '\'':
+                        l[1] += char
+                        continue
+                    else:
+                        counter = 2
+
             if char.isspace() and spaces:  #skiping newlines and whitespaces
                 pass
-
             elif counter == 0:              #process first part of rule
                 if char == '\'':
                     spaces = not spaces
@@ -75,10 +92,10 @@ class automata:     #class used to store all values needed
                     l[counter] += char
 
             elif counter == 1:              #process second part of rule
-                if char == '\'':
+                if char == '\'' :
                     spaces = not spaces
                     l[counter] += char
-                    counter += 1
+                    counter = -1
                 else:
                     l[counter] += char
 
@@ -208,8 +225,10 @@ class automata:     #class used to store all values needed
         for symbol in self.ka_alphabet:
             if symbol == '\'\'':
                 error("epsilon in alphabet",60)
-            if len(symbol) > 3:
+            if len(symbol) > 3 and symbol != '\'\'\'\'':
                 error("too many chars in symbol",60)
+            if symbol == '\'\'\'':
+                error("apostrophe",60)
 
 
     def check_states(self):
@@ -474,10 +493,49 @@ def args_handler():       #setting properly arg library options
 
 def check_args(args):
 
-    if args.find_non_finishing and args.minimize:
+    if args.find_non_finishing and args.minimize:   #invalid usage of args
         error("Cannot use this combination of arguments",1)
 
+    arg_help = False            #not compatible with gnu standards so
+    arg_minimize = False        # checking for duplicities
+    arg_find_non_finishing = False
+    arg_input = False;
+    arg_output = False;
+    input_regex = re.compile('^(--input=)',re.MULTILINE) #preprace regexes for
+    output_regex = re.compile('^(--output=)',re.MULTILINE)#fulltext args
 
+    for arg in sys.argv:                            #go through every arg
+        if arg == '-m' or arg == '--minimize':
+            if arg_minimize:                        #if arg was defined
+                error('arg duplicity',1)            #raise error
+            else:                                   #if not
+                arg_minimize = True;                #set definition flag
+                                                    #same fo others
+        if arg == '-f' or arg == '--find-non-finishing':
+            if arg_find_non_finishing:
+                error('arg duplicity',1)
+            else:
+                arg_find_non_finishing = True;
+
+        if arg == '--help':
+            if arg_help:
+                error('arg duplicity',1)
+            else:
+                arg_help = True;
+
+        if input_regex.match(arg) is not None:
+            if arg_input:
+                error('arg duplicity',1)
+            else:
+                arg_input = True
+
+        if output_regex.match(arg) is not None:
+            if arg_output:
+                error('arg duplicity',1)
+            else:
+                arg_output = True
+
+#see every part of parsed automata
 def debug(mka):
     print('*********')
     for s in mka.ka_states:
@@ -493,7 +551,7 @@ def debug(mka):
     print('END')
     for end in mka.ka_end_states:
         print(end)
-
+    # bracket counter, just in case
     print ("CURLY:%d" % mka.curlybracket)
     print ("ROUND:%d" % mka.roundbrackets)
     print ("COMMAS:%d" % mka.commas)
@@ -507,10 +565,10 @@ try:
     args = parser.parse_args()
 except SystemExit:
     error("",1)
-#print(args)
 check_args(args)
 
-mka = automata();
+
+mka = automata(); #
 mka.buffer = get_input(args)
 if len(mka.buffer) == 0:
     exit(60)
