@@ -5,6 +5,7 @@ import argparse
 import sys
 import os
 import re
+import copy
 from collections import OrderedDict
 
 class automata:     #class used to store all values needed
@@ -482,13 +483,14 @@ class automata:     #class used to store all values needed
             for symbol in self.ka_alphabet:
                 if state != self.ka_rules[state][symbol]:
                     reachable.append(self.ka_rules[state][symbol])
-
         else:
             reachable = list(set(reachable))
-            print(reachable)
-            print(self.ka_states)
-            if len(reachable) != len(self.ka_states):
+            states = copy.deepcopy(self.ka_states)
+            if self.ka_start not in reachable:
+                del states[0]
+            if len(reachable) != len(states):
                 error("non deterministic",62)
+
 
 def error(message,code):
     sys.stderr.write("ERR:%s\n"%message)
@@ -617,7 +619,8 @@ if args.case_insensitive:
 mka.parse_automata()
 #debug(mka)
 mka.check_automata()
-#mka.determinization_test()
+
+mka.determinization_test()
 if not args.find_non_finishing and not args.minimize:
     mka.write(args)
 elif args.find_non_finishing:
