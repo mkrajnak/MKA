@@ -24,6 +24,7 @@ class Automata:     #class used to store all values and methods needed
 
     output = sys.stdout
 
+
     def get_char(self):
         while(self.buffer_index < len(self.buffer) -1):
             self.buffer_index += 1
@@ -38,6 +39,7 @@ class Automata:     #class used to store all values and methods needed
             else:
                 new_string += char
         return new_string
+
 
     def get_list(self): #goind through part betwee{} char by char and return them
                         #in list
@@ -501,22 +503,191 @@ class Automata:     #class used to store all values and methods needed
     def unrechable(self):
 
         temp_reachable=[]
-        temp_reachable.append(self.ka_start)
+        temp_reachable.append(self.ka_start)        #begin with start state
         reached = copy.deepcopy(temp_reachable)
         while(True):
-            for state in temp_reachable:
-                for symbol in self.ka_alphabet:
+            for state in temp_reachable:            #every reached state store
+                for symbol in self.ka_alphabet:     #in list
                     reached.append(self.ka_rules[state][symbol])
             else:
                 reached = list(set(reached))
                 reached.sort()
-                if reached == temp_reachable:
-                    break;
+                if reached == temp_reachable:       #compare lists
+                    break;                  #list are equal stop
                 else:
-                    temp_reachable = copy.deepcopy(reached)
+                    temp_reachable = copy.deepcopy(reached) #update list and go again
 
-        if reached != self.ka_states:
+        if reached != self.ka_states:       #check if all statates were reached
                 error("non reachable state",62)
+
+
+    def get_list_without_comma(self): #goind through part betwee{} char by char and return them
+
+        self.state += 1
+        string = ''                          #epmty string
+        l = []                              #setup empty list
+        begin = False
+        for char in self.get_char():
+
+            if char =='\n' or char =='\t':  #skipping spaces
+                pass
+                begin = False
+            elif char.isspace() and not begin:
+                pass
+            elif char.isspace():   #skip unwanted chars
+                if string != '':
+                    l.append(string)            #and go to next
+                string = ''
+                begin = False
+            #elif char == '\'':
+            #    string += char
+            elif char == ',':               #end if current token, store it
+                if string != '':
+                    l.append(string)            #and go to next
+
+                # if end:
+                #     error("incorect input",60)
+                string = ''
+                begin = False
+            elif char == '}':               #end of section
+                # if(end):
+                #     error("incorect input",60)
+                mka.curlybracket += 1
+                if string == '':
+                    return l
+                #string = self.escape(string)
+                l.append(string)            #store token and go back
+                string = ''
+                print(l)
+                l = list(set(l))
+                l.sort()
+                return l                    #returns list if tokens found in {}
+            else:
+                begin = True
+                string += char              #appending char to string
+
+
+    def get_dict_without_comma(self):
+        self.state += 1
+        counter = 0                         #counter for goining through one rule
+        l = ['','','','']                   #empty list, every rule has 4 strings
+        d = OrderedDict()                             #prepare empty dict
+        begin = False
+        for char in self.get_char():
+
+            if char =='\n' or char =='\t':  #skipping spaces
+                pass
+            if counter == -1:
+                    if char == '\'':
+                        begin = True
+                        l[1] += char
+                        continue
+                    else:
+                        counter = 2
+            elif counter == 0:              #process first part of rule
+                if char.isspace() and not begin:    #skiping newlines and whitespaces
+                    pass
+                elif char.isspace():
+                    begin = False
+                    counter += 1
+                elif char == '\'':
+                    counter += 1            #increment counter to go to next part
+                    begin = True
+                    l[counter] += char      #append char (' is needed)
+                else:
+                    begin = True
+                    l[counter] += char
+
+            elif counter == 1:              #process second part of rule
+                if char.isspace() and begin:    #skiping newlines and whitespaces
+                    counter += 1
+                elif char == '\'':
+                    l[counter] += char
+                    counter += 1
+                if  char == '-':
+                    pass
+                else:
+                    begin = True
+                    l[counter] += char
+
+            elif counter == 2:              #process third part of rule
+                if char == '>':
+                    l[counter] += char
+                    counter += 1
+                    begin = False
+
+            elif counter == 3:
+                # if char == '\'':              #final stage
+                #     error("incorect input",60)
+                if char.isspace() and not begin:
+                    pass
+                elif char == '}' or char.isspace() or char == ',' \
+                    or char == '\n' or char == '\t':
+                    if l[0] not in d.keys():    #check if key is already in dict
+                        d[l[0]] = OrderedDict({l[1] : l[3]}) #if not store another dict inside
+                    else:
+                        #if l[1] in d[l[0]].keys() and d[l[0]][l[1]] != l[3]:
+                        #    error("rule duplication",62)
+                        d[l[0]].update({l[1] : l[3]}) #TODO:function
+                    if char == '}':
+                        mka.curlybracket += 1
+                        break;
+                    l = ['','','','']
+                    counter = 0
+                    begin = False
+                else:
+                    begin = True
+                    l[counter] += char
+        return d
+
+
+    def get_start_without_comma(self):
+        self.state += 1
+        begin = False
+        string = ''                          #epmty string
+        for char in self.get_char():
+            if char =='\n' or char =='\t':  #skipping spaces
+                pass
+            if char.isspace() and string != '' and begin:               #skip inwanted chars
+                return string
+            elif char == ',' and string != '':   #end if current token, store it
+                self.commas += 1
+                return string
+            else:
+                begin = True
+                string += char               #appending
+
+
+    def parse_automata_without_comma(self):   #stores automata in data structures
+
+        for char in self.get_char():    #going through text char by char
+
+            if char =='\n' or char =='\t':  #skipping spaces
+                pass
+            if char == '{':             #go inside every part started wih {
+                if self.state == 0:     #and properly store everything inside
+                    self.ka_states = self.get_list_without_comma()
+                elif self.state == 1:
+                    self.ka_alphabet = self.get_list_without_comma()
+                elif self.state == 2:
+                    self.ka_rules = self.get_dict_without_comma()
+                elif self.state == 4:
+                    self.ka_end_states = self.get_list_without_comma()
+                self.curlybracket += 1
+            elif char.isspace() and self.state == 3:   # start states in not
+                self.commas += 1                    #inside {}
+                self.ka_start = self.get_start_without_comma()
+            elif char == ',' and self.state == 3:   # start states in not
+                self.commas += 1                    #inside {}
+                self.ka_start = self.get_start_without_comma()
+            elif char == ',' or char.isspace():
+                self.commas += 1                    #counting commas
+            elif char == '(' or char == ')':
+                self.roundbrackets += 1
+                             # and brackets
+        # if self.curlybracket != 8 or \
+        #     self.roundbrackets != 2:
+        #     error("Bad input",60)
 
 
 def error(message,code):
@@ -553,13 +724,11 @@ def args_handler():       #setting properly arg library options
     parser.add_argument('-f','--find-non-finishing', help='finding nonfinishing state of MKA', action='store_true')
     parser.add_argument('-m','--minimize', help='will make minimalization of automata', action='store_true')
     parser.add_argument('-i','--case-insensitive', help='will properly convert the case of letters', action='store_true')
+    parser.add_argument('-w','--white-char', help='white char insted of comma', action='store_true')
     return parser;
 
 
-def check_args(args):
-
-    if args.find_non_finishing and args.minimize:   #invalid usage of args
-        error("Cannot use this combination of arguments",1)
+def check_args():
 
     arg_help = False            #not compatible with gnu standards so
     arg_minimize = False        # checking for duplicities
@@ -599,6 +768,8 @@ def check_args(args):
                 error('arg duplicity',1)
             else:
                 arg_output = True
+    if arg_help:
+        print('help')
 
 #see every part of parsed automata
 def debug(mka):
@@ -624,12 +795,11 @@ def debug(mka):
 #MAIN
 
 parser = args_handler()
-
+check_args(args)
 try:
     args = parser.parse_args()
 except SystemExit: #overrides default argparse value
     error("",1)
-check_args(args)
 
 # define new automata
 mka = Automata(); #
@@ -641,8 +811,15 @@ mka.buffer = get_rid_of_comments(mka.buffer)
 if args.case_insensitive:           #handle case sensitivity
     mka.buffer = mka.buffer.lower()
 
-mka.parse_automata()                #properely convert the input
-#debug(mka)
+if args.find_non_finishing and args.minimize:   #invalid usage of args
+    error("Cannot use this combination of arguments",1)
+
+if args.white_char:
+    mka.parse_automata_without_comma()
+else:
+    mka.parse_automata()                #properely convert the input
+debug(mka)
+
 mka.check_automata()                #check alphabet emptyness etc
 mka.unrechable()                    #check if there is non reachabable state
 
