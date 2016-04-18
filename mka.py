@@ -27,7 +27,8 @@ class Automata:     #class used to store all values needed
     def get_char(self):
         while(self.buffer_index < len(self.buffer) -1):
             self.buffer_index += 1
-            yield self.buffer[self.buffer_index]
+            yield self.buffer[self.buffer_index]#yealds char after char in input
+
 
     def escape(self,string):
         new_string = ''
@@ -44,17 +45,24 @@ class Automata:     #class used to store all values needed
         string = ''                          #epmty string
         l = []                              #setup empty list
         spaces = True
+        end = False
+        apostrophe = False
         for char in self.get_char():
             if char.isspace() and spaces:   #skip unwanted chars
                 pass
             elif char == '\'':
+                apostrophe = not apostrophe
                 string += char
                 spaces = not spaces
             elif char == ',':               #end if current token, store it
-                #string = self.escape(string)
+                if end or apostrophe:
+                    error("incorect input",60)
                 l.append(string)            #and go to next
                 string = ''
+                end = True
             elif char == '}':               #end of section
+                if(end):
+                    error("incorect input",60)
                 mka.curlybracket += 1
                 if string == '':
                     return l
@@ -65,6 +73,7 @@ class Automata:     #class used to store all values needed
                 l.sort()
                 return l                    #returns list if tokens found in {}
             else:
+                end = False
                 string += char              #appending char to string
 
 
@@ -109,8 +118,11 @@ class Automata:     #class used to store all values needed
                     counter += 1
                     #print('ERRR')
 
-            elif counter == 3:              #final stage
+            elif counter == 3:
+                if char == '\'':              #final stage
+                    error("incorect input",60)
                 if char == ',' or char == '}' :
+                    end = True
                     if l[0] not in d.keys():    #check if key is already in dict
                         d[l[0]] = OrderedDict({l[1] : l[3]}) #if not store another dict inside
                     else:
@@ -480,18 +492,23 @@ class Automata:     #class used to store all values needed
 
     def determinization_test(self):
 
-        reachable = []                  #go through every rule.
-        for state in self.ka_states:
-            for symbol in self.ka_alphabet:
-                if state != self.ka_rules[state][symbol]:
-                    reachable.append(self.ka_rules[state][symbol])
-        else:
-            reachable = list(set(reachable))
-            states = copy.deepcopy(self.ka_states)
-            if self.ka_start not in reachable:
-                del states[0]       #delete start state
-            if len(reachable) != len(states):#certain state is not reachable
-                error("non deterministic",62)
+        temp_reachable=[]
+        temp_reachable.append(self.ka_start)
+        reached = copy.deepcopy(temp_reachable)
+        while(True):
+            for state in temp_reachable:
+                for symbol in self.ka_alphabet:
+                    reached.append(self.ka_rules[state][symbol])
+            else:
+                reached = list(set(reached))
+                reached.sort()
+                if reached == temp_reachable:
+                    break;
+                else:
+                    temp_reachable = copy.deepcopy(reached)
+
+        if reached != self.ka_states:
+                error("non reachable state",62)
 
 
 def error(message,code):
@@ -596,10 +613,7 @@ def debug(mka):
     print ("ROUND:%d" % mka.roundbrackets)
     print ("COMMAS:%d" % mka.commas)
 
-
-'''
-MAIN
-'''
+#MAIN
 
 parser = args_handler()
 
@@ -609,14 +623,14 @@ except SystemExit: #overrides default argparse value
     error("",1)
 check_args(args)
 
-
+# define new automata
 mka = Automata(); #
-mka.buffer = get_input(args)
-if len(mka.buffer) == 0:
+mka.buffer = get_input(args)        #get buffer
+if len(mka.buffer) == 0:            #test for emptyness
     exit(60)
 mka.buffer = get_rid_of_comments(mka.buffer)
-#print(mka.buffer)
-if args.case_insensitive:
+
+if args.case_insensitive:           #handle case sensitivity
     mka.buffer = mka.buffer.lower()
 
 mka.parse_automata()
