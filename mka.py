@@ -8,7 +8,7 @@ import re
 import copy
 from collections import OrderedDict
 
-class Automata:     #class used to store all values needed
+class Automata:     #class used to store all values and methods needed
     buffer = ''
     buffer_index = -1
     roundbrackets = 0
@@ -241,17 +241,25 @@ class Automata:     #class used to store all values needed
             f.close()
 
 
-    def check_trap(self):
+    def check_trap(self):           #find trap
+
+        i = 0
         for a in self.ka_rules:
             forward_states = []
-            for b in self.ka_rules[a]:
+            for b in self.ka_rules[a]:  #finds trap from rules
                 if self.ka_rules[a][b] not in forward_states:
                     forward_states.append(self.ka_rules[a][b])
             if len(forward_states) == 1 and a in forward_states:
-                self.write_trap(a)
-                exit(0)
+                i += 1
+                if args.find_non_finishing:
+                        self.write_trap(a)
+                        exit(0)
         else:
-            self.write_trap(str(0))
+            if args.find_non_finishing:
+                    self.write_trap(str(i))
+                    exit(0)
+            else:
+                return i
 
 
     def check_alphabet(self):
@@ -490,7 +498,7 @@ class Automata:     #class used to store all values needed
                 symbol = ''
 
 
-    def determinization_test(self):
+    def unrechable(self):
 
         temp_reachable=[]
         temp_reachable.append(self.ka_start)
@@ -633,15 +641,16 @@ mka.buffer = get_rid_of_comments(mka.buffer)
 if args.case_insensitive:           #handle case sensitivity
     mka.buffer = mka.buffer.lower()
 
-mka.parse_automata()
+mka.parse_automata()                #properely convert the input
 #debug(mka)
-mka.check_automata()
+mka.check_automata()                #check alphabet emptyness etc
+mka.unrechable()                    #check if there is non reachabable state
 
-mka.determinization_test()
+if mka.check_trap() > 1:
+    error("not DSKA",60)
+
 if not args.find_non_finishing and not args.minimize:
     mka.write(args)
-elif args.find_non_finishing:
-    mka.check_trap()
 elif args.minimize:
     ma = mka.minimize()
     ma.write(args)
