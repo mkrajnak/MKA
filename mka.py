@@ -8,7 +8,7 @@ import re
 import copy
 from collections import OrderedDict
 
-class automata:     #class used to store all values needed
+class Automata:     #class used to store all values needed
     buffer = ''
     buffer_index = -1
     roundbrackets = 0
@@ -215,6 +215,7 @@ class automata:     #class used to store all values needed
         self.print_list(self.ka_end_states)
         self.output.write('\n)')                                #end
 
+
     def write_trap(self,trap):
         if args.output is None:
             sys.stdout.write(trap)
@@ -227,6 +228,7 @@ class automata:     #class used to store all values needed
             f.write(trap)
             f.close()
 
+
     def check_trap(self):
         for a in self.ka_rules:
             forward_states = []
@@ -238,6 +240,7 @@ class automata:     #class used to store all values needed
                 exit(0)
         else:
             self.write_trap(str(0))
+
 
     def check_alphabet(self):
         if not self.ka_alphabet:        #alphabet is empty
@@ -296,45 +299,42 @@ class automata:     #class used to store all values needed
             f.close()
 
 
-    def same_items(self,l):
-        for item in l:
-            if item != l[0]:
-                return False;
-        else: return True;
+    def same_group(self, test_members, groups): # tests if memeber are from same group
 
-    def same_group(self, test_members, groups):
-
-        for grp in groups:
-            membership = True;
+        for grp in groups:                  #for every group
+            membership = True;              #membership indicator
             for member in test_members:
                 if not self.is_member(member,grp):
-                    membership = False
+                    membership = False      #members are not within same group
                     break;
             else:
-                return membership
+                return membership           #all groups check, positive mebership
 
 
     def is_member(self, member, group):
 
-        if member not in group:
+        if member not in group: # just test for member ship, but only for state
             return False;
         else:
             return True;
 
-    def get_key(self, d, value1, value2):
+
+    def get_key(self, d, value1, value2):#finds key for certain value in dictionary
         for key in d.keys():
             if d[key][value1] == value2:
                 return key;
 
-    def get_rules_for_group(self, group):
 
+    def get_rules_for_group(self, group):#creates temporary set of rules,
+                                        #which applies only for group members
         d = OrderedDict()
         for member in group:
                 d[member] = self.ka_rules[member]
         return d
 
-    def add_rules(self, d, state, symbol, next_state):
 
+    def add_rules(self, d, state, symbol, next_state):#create new entry in
+                                                    #dict inside dict
         if state not in d.keys():
             d[state] = OrderedDict({symbol:next_state})
         else:
@@ -342,7 +342,7 @@ class automata:     #class used to store all values needed
         return d
 
 
-    def update_states(self, groups):
+    def update_states(self, groups): #joins states together after minimization
 
         new_states = []
         for group in groups:
@@ -352,33 +352,35 @@ class automata:     #class used to store all values needed
                 new_states.append("_".join(group))
         return new_states
 
-    def find_merged_state(self,groups,state):
 
+    def find_merged_state(self,groups,state):#same as above but string is returned
+                                            #instead of list
         for group in groups:
             if state in group:
                 return "_".join(group)
 
-    def find_merged(self,groups,state):
 
+    def find_merged(self,groups,state):#finds group for merged state
+                                        #and returns first memeber
         for group in groups:
             if state == '_'.join(group):
                 return group[0]
 
 
-    def create_rules(self, groups, states):
+    def create_rules(self, groups, states):#create automata rules after minimalisation
 
         new_rules = OrderedDict() #
         for state in states:
             for symbol in self.ka_alphabet:
-                if state not in self.ka_rules.keys():
+                if state not in self.ka_rules.keys():#state was merged
                     temp_state = self.find_merged(groups,state)
                     next_state = self.ka_rules[temp_state][symbol]
-                    if next_state not in states:
+                    if next_state not in states:#next state was also merged
                         next_state = self.find_merged_state(groups,next_state)
                     self.add_rules(new_rules, state, symbol,next_state)
-                else:
+                else:#state remains
                     next_state = self.ka_rules[state][symbol]
-                    if next_state not in states:
+                    if next_state not in states:#but next state was merged
                         next_state = self.find_merged_state(groups,next_state)
                     self.add_rules(new_rules, state, symbol,next_state)
         return new_rules
@@ -405,7 +407,7 @@ class automata:     #class used to store all values needed
             other_states = groups[-1]
             division_flag = False
             for symbol in self.ka_alphabet:
-                #go though states that are not in end states
+                #go though states
                 for grp in groups:
                     # go through every group
                     temp_rules = self.get_rules_for_group(grp) #reload rules
@@ -449,7 +451,7 @@ class automata:     #class used to store all values needed
             group.sort()
 
         #minimized ! handle new automata
-        ma = automata() #creating minimized automata
+        ma = Automata() #creating minimized automata
         ma.ka_states = self.update_states(groups)
         ma.ka_rules = self.create_rules(groups,ma.ka_states)
 
@@ -466,7 +468,7 @@ class automata:     #class used to store all values needed
         return ma
 
 
-    def check_whitespaces(self):
+    def check_whitespaces(self):#but whitespaces
 
         for symbol in self.ka_alphabet:
             for char in symbol:
@@ -478,7 +480,7 @@ class automata:     #class used to store all values needed
 
     def determinization_test(self):
 
-        reachable = []
+        reachable = []                  #go through every rule.
         for state in self.ka_states:
             for symbol in self.ka_alphabet:
                 if state != self.ka_rules[state][symbol]:
@@ -487,8 +489,8 @@ class automata:     #class used to store all values needed
             reachable = list(set(reachable))
             states = copy.deepcopy(self.ka_states)
             if self.ka_start not in reachable:
-                del states[0]
-            if len(reachable) != len(states):
+                del states[0]       #delete start state
+            if len(reachable) != len(states):#certain state is not reachable
                 error("non deterministic",62)
 
 
@@ -497,7 +499,7 @@ def error(message,code):
     sys.exit(code)
 
 
-def get_rid_of_comments(ka):
+def get_rid_of_comments(ka):    #regex which deletes comments from input
     regex = re.compile('(#.*)$',re.MULTILINE)
     return re.sub(regex, '',mka.buffer)
 
@@ -600,14 +602,15 @@ MAIN
 '''
 
 parser = args_handler()
+
 try:
     args = parser.parse_args()
-except SystemExit:
+except SystemExit: #overrides default argparse value
     error("",1)
 check_args(args)
 
 
-mka = automata(); #
+mka = Automata(); #
 mka.buffer = get_input(args)
 if len(mka.buffer) == 0:
     exit(60)
