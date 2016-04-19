@@ -601,11 +601,9 @@ class Automata:     #class used to store all values and methods needed
             elif counter == 1:              #process second part of rule
                 if char.isspace() and begin:    #skiping newlines and whitespaces
                     counter += 1
-                elif char == '\'':
-                    l[counter] += char
+                elif  char == '-':
                     counter += 1
-                if  char == '-':
-                    pass
+                    l[counter] += char
                 else:
                     begin = True
                     l[counter] += char
@@ -615,8 +613,14 @@ class Automata:     #class used to store all values and methods needed
                     l[counter] += char
                     counter += 1
                     begin = False
+                    print(l[2])
+                elif  char == '-':
+                    l[counter] += char
 
             elif counter == 3:
+                if l[2] != '->':
+                    error("invalid input",60)
+
                 # if char == '\'':              #final stage
                 #     error("incorect input",60)
                 if char.isspace() and not begin:
@@ -717,8 +721,7 @@ def get_input(args):            #reads input from file TODO: stdin
 
 def args_handler():       #setting properly arg library options
 
-    parser = argparse.ArgumentParser(prog='PROG', description='MKA',add_help=False)
-    parser.add_argument('--help', action="help", help='print out this message and exits')
+    parser = argparse.ArgumentParser(prog='PROG', description='MKA')
     parser.add_argument('--input', nargs=1, help='insert corrent input file name')
     parser.add_argument('--output', nargs=1, help='insert corrent output file name')
     parser.add_argument('-f','--find-non-finishing', help='finding nonfinishing state of MKA', action='store_true')
@@ -775,22 +778,11 @@ def check_args():
                 error('arg duplicity',1)
             else:
                 arg_output = True
-    if arg_help:
-        print('''usage: PROG [--help] [--input INPUT] [--output OUTPUT] [-f] [-m] [-i] [-w]
 
-        MKA
-        optional arguments:
-          --help                print out this message and exits
-          --input INPUT         insert correct input file name
-          --output OUTPUT       insert correct output file name
-          -f, --find-non-finishing
-                                finding nonfinishing state of MKA
-          -m, --minimize        will make minimalization of automata
-          -i, --case-insensitive
-                                will properly convert the case of letters
-          -w, --white-char      white char insted of comma
-        ''')
-        exit(0)
+    if arg_help:
+        if len(sys.argv) != 2:
+            error("wrong args",1)
+
 
 #see every part of parsed automata
 def debug(mka):
@@ -813,14 +805,16 @@ def debug(mka):
     print ("ROUND:%d" % mka.roundbrackets)
     print ("COMMAS:%d" % mka.commas)
 
-#MAIN
 
+#MAIN
 parser = args_handler()
 check_args()
 try:
     args = parser.parse_args()
-except SystemExit: #overrides default argparse value
-    error("",1)
+except SystemExit as e: #overrides default argparse value
+    if e.code > 0:
+        error("",1)
+    exit(0)
 
 if args.find_non_finishing and args.minimize:   #invalid usage of args
     error("Cannot use this combination of arguments",1)
@@ -840,7 +834,7 @@ if args.white_char:
     mka.parse_automata_without_comma()
 else:
     mka.parse_automata()                #properely convert the input
-#debug(mka)
+debug(mka)
 
 mka.check_automata()                #check alphabet emptyness etc
 mka.unrechable()                    #check if there is non reachabable state
