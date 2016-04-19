@@ -733,8 +733,9 @@ def check_args():
     arg_help = False            #not compatible with gnu standards so
     arg_minimize = False        # checking for duplicities
     arg_find_non_finishing = False
-    arg_input = False;
-    arg_output = False;
+    arg_input = False
+    arg_output = False
+    arg_white_char = False
     input_regex = re.compile('^(--input=)',re.MULTILINE) #preprace regexes for
     output_regex = re.compile('^(--output=)',re.MULTILINE)#fulltext args
 
@@ -757,6 +758,12 @@ def check_args():
             else:
                 arg_help = True;
 
+        if arg == '-w' or arg == '--white-char':
+            if arg_white_char:
+                error('arg duplicity',1)
+            else:
+                arg_white_char = True;
+
         if input_regex.match(arg) is not None:
             if arg_input:
                 error('arg duplicity',1)
@@ -769,7 +776,20 @@ def check_args():
             else:
                 arg_output = True
     if arg_help:
-        print('help')
+        print('''usage: PROG [--help] [--input INPUT] [--output OUTPUT] [-f] [-m] [-i] [-w]
+
+        MKA
+        optional arguments:
+          --help                print out this message and exits
+          --input INPUT         insert correct input file name
+          --output OUTPUT       insert correct output file name
+          -f, --find-non-finishing
+                                finding nonfinishing state of MKA
+          -m, --minimize        will make minimalization of automata
+          -i, --case-insensitive
+                                will properly convert the case of letters
+          -w, --white-char      white char insted of comma
+        ''')
         exit(0)
 
 #see every part of parsed automata
