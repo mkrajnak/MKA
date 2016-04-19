@@ -701,8 +701,23 @@ class Automata:     #class used to store all values and methods needed
 
     def analyze_string(self,string):
 
-        for symbol in self.ka_alphabet:
-            print(symbol)
+        if string == "":
+            error('string chars not in alphabet',1)
+        symbols = []
+        for char in string:                 #check symbol of string are from
+            temp_char = '\'' + char + '\''  #automaton alphabet
+            if temp_char not in self.ka_alphabet:
+                error('string chars not in alphabet',1)
+            symbols.append(temp_char)
+
+        state = self.ka_start               #insert start symbol
+        for symbol in symbols:
+            state = self.ka_rules[state][symbol]    # go through automaton
+
+        if state in self.ka_end_states:          #string reached end_state
+            sys.stdout.write('1')
+        else:
+            sys.stdout.write('0')
         exit(0)
 
 
