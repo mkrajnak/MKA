@@ -500,7 +500,7 @@ class Automata:     #class used to store all values and methods needed
                 symbol = ''
 
 
-    def unrechable(self):
+    def unreachable(self):
 
         temp_reachable=[]
         temp_reachable.append(self.ka_start)        #begin with start state
@@ -558,7 +558,6 @@ class Automata:     #class used to store all values and methods needed
                 #string = self.escape(string)
                 l.append(string)            #store token and go back
                 string = ''
-                print(l)
                 l = list(set(l))
                 l.sort()
                 return l                    #returns list if tokens found in {}
@@ -585,7 +584,10 @@ class Automata:     #class used to store all values and methods needed
                     else:
                         counter = 2
             elif counter == 0:              #process first part of rule
-                if char.isspace() and not begin:    #skiping newlines and whitespaces
+                if char == '}':
+                    mka.curlybracket += 1
+                    break;
+                elif char.isspace() and not begin:    #skiping newlines and whitespaces
                     pass
                 elif char.isspace():
                     begin = False
@@ -613,25 +615,24 @@ class Automata:     #class used to store all values and methods needed
                     l[counter] += char
                     counter += 1
                     begin = False
-                    print(l[2])
                 elif  char == '-':
                     l[counter] += char
-
             elif counter == 3:
                 if l[2] != '->':
                     error("invalid input",60)
 
-                # if char == '\'':              #final stage
-                #     error("incorect input",60)
+                if char == '\'':              #final stage
+                    error("incorect input",60)
                 if char.isspace() and not begin:
                     pass
-                elif char == '}' or char.isspace() or char == ',' \
-                    or char == '\n' or char == '\t':
+                elif char == '}' or char.isspace() or char == ',':
+                    if '\'' not in l[1]:            #add quotes
+                        l[1] = '\'' + l[1] + '\''
                     if l[0] not in d.keys():    #check if key is already in dict
                         d[l[0]] = OrderedDict({l[1] : l[3]}) #if not store another dict inside
                     else:
-                        #if l[1] in d[l[0]].keys() and d[l[0]][l[1]] != l[3]:
-                        #    error("rule duplication",62)
+                        if l[1] in d[l[0]].keys() and d[l[0]][l[1]] != l[3]:
+                            error("rule duplication",62)
                         d[l[0]].update({l[1] : l[3]}) #TODO:function
                     if char == '}':
                         mka.curlybracket += 1
@@ -640,6 +641,7 @@ class Automata:     #class used to store all values and methods needed
                     counter = 0
                     begin = False
                 else:
+
                     begin = True
                     l[counter] += char
         return d
@@ -650,9 +652,11 @@ class Automata:     #class used to store all values and methods needed
         begin = False
         string = ''                          #epmty string
         for char in self.get_char():
-            if char =='\n' or char =='\t':  #skipping spaces
+            if char.isspace() and not begin:
                 pass
-            if char.isspace() and string != '' and begin:               #skip inwanted chars
+            elif char == ',' and not begin:   #end if current token, store it
+                pass
+            elif char.isspace() and string != '' and begin:               #skip inwanted chars
                 return string
             elif char == ',' and string != '':   #end if current token, store it
                 self.commas += 1
@@ -665,10 +669,9 @@ class Automata:     #class used to store all values and methods needed
     def parse_automata_without_comma(self):   #stores automata in data structures
 
         for char in self.get_char():    #going through text char by char
-
-            if char =='\n' or char =='\t':  #skipping spaces
+            if char.isspace() or char =='\n':  #skipping spaces
                 pass
-            if char == '{':             #go inside every part started wih {
+            elif char == '{':             #go inside every part started wih {
                 if self.state == 0:     #and properly store everything inside
                     self.ka_states = self.get_list_without_comma()
                 elif self.state == 1:
@@ -678,20 +681,22 @@ class Automata:     #class used to store all values and methods needed
                 elif self.state == 4:
                     self.ka_end_states = self.get_list_without_comma()
                 self.curlybracket += 1
-            elif char.isspace() and self.state == 3:   # start states in not
+            if self.state == 3:   # start states in not
                 self.commas += 1                    #inside {}
                 self.ka_start = self.get_start_without_comma()
-            elif char == ',' and self.state == 3:   # start states in not
-                self.commas += 1                    #inside {}
-                self.ka_start = self.get_start_without_comma()
-            elif char == ',' or char.isspace():
+            elif char == ',':
                 self.commas += 1                    #counting commas
             elif char == '(' or char == ')':
-                self.roundbrackets += 1
-                             # and brackets
-        # if self.curlybracket != 8 or \
-        #     self.roundbrackets != 2:
-        #     error("Bad input",60)
+                self.roundbrackets += 1             # and brackets
+
+        for i in range(0,len(self.ka_alphabet)):
+            if '\'' not in self.ka_alphabet[i]:
+                self.ka_alphabet[i] = '\'' + self.ka_alphabet[i] + '\''
+        self.ka_alphabet.sort()
+
+        if self.curlybracket != 8 or \
+             self.roundbrackets != 2:
+             error("Bad input",60)
 
 
 def error(message,code):
@@ -834,10 +839,10 @@ if args.white_char:
     mka.parse_automata_without_comma()
 else:
     mka.parse_automata()                #properely convert the input
-debug(mka)
+#debug(mka)
 
 mka.check_automata()                #check alphabet emptyness etc
-mka.unrechable()                    #check if there is non reachabable state
+mka.unreachable()                    #check if there is non reachabable state
 
 if mka.check_trap() > 1:
     error("not DSKA",60)
