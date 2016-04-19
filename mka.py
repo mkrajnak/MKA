@@ -770,6 +770,7 @@ def check_args():
                 arg_output = True
     if arg_help:
         print('help')
+        exit(0)
 
 #see every part of parsed automata
 def debug(mka):
@@ -795,11 +796,14 @@ def debug(mka):
 #MAIN
 
 parser = args_handler()
-check_args(args)
+check_args()
 try:
     args = parser.parse_args()
 except SystemExit: #overrides default argparse value
     error("",1)
+
+if args.find_non_finishing and args.minimize:   #invalid usage of args
+    error("Cannot use this combination of arguments",1)
 
 # define new automata
 mka = Automata(); #
@@ -811,14 +815,12 @@ mka.buffer = get_rid_of_comments(mka.buffer)
 if args.case_insensitive:           #handle case sensitivity
     mka.buffer = mka.buffer.lower()
 
-if args.find_non_finishing and args.minimize:   #invalid usage of args
-    error("Cannot use this combination of arguments",1)
 
 if args.white_char:
     mka.parse_automata_without_comma()
 else:
     mka.parse_automata()                #properely convert the input
-debug(mka)
+#debug(mka)
 
 mka.check_automata()                #check alphabet emptyness etc
 mka.unrechable()                    #check if there is non reachabable state
