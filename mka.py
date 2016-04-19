@@ -700,7 +700,10 @@ class Automata:     #class used to store all values and methods needed
 
 
     def analyze_string(self,string):
-        print(string)
+
+        for symbol in self.ka_alphabet:
+            print(symbol)
+        exit(0)
 
 
 def error(message,code):
