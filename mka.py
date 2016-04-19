@@ -699,6 +699,10 @@ class Automata:     #class used to store all values and methods needed
              error("Bad input",60)
 
 
+    def analyze_string(self,string):
+        print(string)
+
+
 def error(message,code):
     sys.stderr.write("ERR:%s\n"%message)
     sys.exit(code)
@@ -733,6 +737,7 @@ def args_handler():       #setting properly arg library options
     parser.add_argument('-m','--minimize', help='will make minimalization of automata', action='store_true')
     parser.add_argument('-i','--case-insensitive', help='will properly convert the case of letters', action='store_true')
     parser.add_argument('-w','--white-char', help='white char insted of comma', action='store_true')
+    parser.add_argument('--analyze-string', nargs=1, help='is string suitable for this automaton')
     return parser;
 
 
@@ -744,8 +749,10 @@ def check_args():
     arg_input = False
     arg_output = False
     arg_white_char = False
+    arg_analyze_string = False
     input_regex = re.compile('^(--input=)',re.MULTILINE) #preprace regexes for
     output_regex = re.compile('^(--output=)',re.MULTILINE)#fulltext args
+    analyze_regex = re.compile('^(--analyze-string=)',re.MULTILINE)#fulltext args
 
     for arg in sys.argv:                            #go through every arg
         if arg == '-m' or arg == '--minimize':
@@ -783,6 +790,12 @@ def check_args():
                 error('arg duplicity',1)
             else:
                 arg_output = True
+
+        if analyze_regex.match(arg) is not None:
+            if arg_analyze_string:
+                error('arg duplicity',1)
+            else:
+                arg_analyze_string = True
 
     if arg_help:
         if len(sys.argv) != 2:
@@ -846,6 +859,10 @@ mka.unreachable()                    #check if there is non reachabable state
 
 if mka.check_trap() > 1:
     error("not DSKA",60)
+
+if args.analyze_string is not None:
+    mka.analyze_string(args.analyze_string[0])
+    exit(0)
 
 if not args.find_non_finishing and not args.minimize:
     mka.write(args)
